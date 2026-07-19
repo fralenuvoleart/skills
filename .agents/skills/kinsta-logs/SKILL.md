@@ -84,14 +84,28 @@ The Kinsta API (`kinsta.logs.get`) is **line-based, not time-based**:
   request can carry dozens of edge-cached sub-resource requests MyKinsta's Analytics counts but
   `access.log` never sees). State this origin-vs-edge scope distinction explicitly in the report's
   Traffic Overview section whenever the user cites a higher dashboard number for the same window.
-- **`kinsta-cache-perf` log data is pulled from Cloudflare logs for the site.** ~85% of all requests
-  are served by Cloudflare's Edge cache and never reach Nginx. Only ~15% pass through Cloudflare to
-  Nginx — broken down as dynamic (~13.5%), miss (~1%), and bypass (~0.5%). Nginx handles page
+- **`kinsta-cache-perf` log data is pulled from Cloudflare logs for the site.** ≈85% of all requests
+  are served by Cloudflare's Edge cache and never reach Nginx. Only ≈15% pass through Cloudflare to
+  Nginx — broken down as dynamic (≈13.5%), miss (≈1%), and bypass (≈0.5%). Nginx handles page
   caching for these remaining 15%, and the `kinsta-cache-perf` log's HIT/MISS/BYPASS data represents
   the cache status for this subset only — not total site traffic. When interpreting cache HIT rates
-  from this log, remember: a 60% HIT rate here means 60% of 15% = ~9% of total traffic got an
-  Nginx page-cache HIT, on top of the ~85% already served by Cloudflare's edge cache (combined
-  ~94% of all requests served from cache).
+  from this log, remember: a 60% HIT rate here means 60% of 15% = ≈9% of total traffic got an
+  Nginx page-cache HIT, on top of the ≈85% already served by Cloudflare's edge cache (combined
+  ≈94% of all requests served from cache).
+
+  **⚠️ The cache-perf log's HIT rate is a narrow-scope snapshot, NOT an authoritative full-day
+  cache health metric.** Two reasons it will often disagree with MyKinsta's "Server cache"
+  dashboard number:
+  1. **Time window:** the log covers only its fetch window (often 3–5 hours), while the dashboard
+     covers the full 24h day. Any 3-hour slice of an hourly-varying metric can differ from the
+     24h average purely from sampling a different mix of traffic.
+  2. **Scope:** the log is Nginx page cache only (the ≈15% origin-reaching subset); the dashboard
+     may aggregate across multiple cache layers.
+
+  **Never present the cache-perf HIT rate as "the" cache health verdict without stating its time
+  window and Nginx-page-cache scope.** When the user provides a dashboard number that differs, cite
+  both numbers, explain the gap (time window + scope), and identify the dashboard as the
+  authoritative full-day metric.
 
 ---
 
@@ -621,9 +635,16 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
        domain/pattern]" when a NEW spam pattern is observed in the error log that is not already
        covered by existing rules. If no new patterns are observed, state `✅ Existing Nginx
        spam-block rules are working as intended — no new patterns detected.` and move on.
+  14. **Cache-perf HIT rate: always state its time window and Nginx-page-cache scope.**
+      See "How Logs Are Retrieved" above for why the cache-perf number differs from the dashboard.
+      In the Overall Assessment cache row and Cache Root Cause Analysis: always state the
+      cache-perf log's time window and that it represents the Nginx page-cache subset. If the
+      window is <6h daytime, add: "daytime steady-state rate not assessable from this data."
+      When the user cites a conflicting dashboard number: cite both, explain the gap (time window
+      + scope), and identify the dashboard as the authoritative full-day metric.
 
 
-   **Full section structure — see [`references/report-structure.md`](references/report-structure.md) for the authoritative contract.** The summary below is a quick reference; the contract file defines exact formats, conditional display rules, and the marker inventory.
+  **Full section structure — see [`references/report-structure.md`](references/report-structure.md) for the authoritative contract.** The summary below is a quick reference; the contract file defines exact formats, conditional display rules, and the marker inventory.
 
    The report has two parts with a hard visual divider:
 
@@ -636,10 +657,10 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
    
    **Part 1 sections** (LLM orders by severity: 🔴 > 🟡 > 🔧 > ✅; within same tier by impact magnitude):
 
-   - **Overall Assessment** (`<!-- LLM:OVERALL_ASSESSMENT -->`) — severity-icon verdict line + 5-row summary table (Security / Stability / Cache / Bot traffic / Slow pages) with a slightly wider Status&nbsp;&nbsp; column. Never a dense prose paragraph. ⚠️ **D9:** If cache-perf window <6h daytime, don't call HIT rate "below target." **D10:** Reference cache cold-start by name only — full explanation lives in Cache Root Cause.
+   - **Overall Assessment** (`<!-- LLM:OVERALL_ASSESSMENT -->`) — severity-icon verdict line + 5-row summary table (Security / Stability / Cache / Bot traffic / Slow pages) with a slightly wider Status&nbsp;&nbsp; column. Never a dense prose paragraph. ⚠️ **D9:** If cache-perf window <6h daytime, don't call HIT rate "below target." **D10:** Reference cache cold-start by name only — full explanation lives in Cache Root Cause. **D14:** State the cache-perf log's time window and Nginx-page-cache scope; never present the HIT rate as authoritative without these caveats.
    - **🎯 Convergent Cross-Signals** — script-authored, deterministic (NOT an LLM marker). A set-intersection across the report's own notable-URL lists (top cache-MISSed pages, burst targets, top 403/404 error URLs); a URL in 2+ lists is named as the single highest-priority fix target with combined evidence cited. Excludes `Kinsta-Log-Analyzer-Probe` traffic (self-generated, not a real finding). Always present — states the overlap or states plainly that none was found. Positioned right after Overall Assessment, before every individual finding card, since its purpose is to reprioritize what follows before the reader reaches it.
    - **Attack/Security Findings** (`<!-- LLM:ATTACK_SECURITY -->`) — Event/Analysis/Source/Actions card format, one card per distinct pattern. If none: single `#### ✅ No security incidents` card. ⚠️ **D13:** 403 spam-blocks confirmed working → `✅ Existing rules working`. Only recommend new rules when new spam patterns appear. Never say "verify rules are still current."
-   - **Cache Root Cause Analysis** (`<!-- LLM:CACHE_ROOT_CAUSE -->`) — sub-headed cards (`#### 🔴 Primary Root Cause`, `#### 🟡 Secondary Contributor`). Evidence-cited from both probe passes. If cache is healthy: `✅ Cache HIT rate at or above target.` ⚠️ **D10: THIS is the ONE AND ONLY place where the midnight-UTC cache purge mechanism gets a full explanation.** Every other section references it by short name only (e.g., `"post-midnight cold-start window (see Cache Root Cause)"`). If you write the purge timing/behavior explanation in any other section, you have violated this rule.
+   - **Cache Root Cause Analysis** (`<!-- LLM:CACHE_ROOT_CAUSE -->`) — sub-headed cards (`#### 🔴 Primary Root Cause`, `#### 🟡 Secondary Contributor`). Evidence-cited from both probe passes. If cache is healthy: `✅ Cache HIT rate at or above target.` ⚠️ **D10: THIS is the ONE AND ONLY place where the midnight-UTC cache purge mechanism gets a full explanation.** Every other section references it by short name only (e.g., `"post-midnight cold-start window (see Cache Root Cause)"`). If you write the purge timing/behavior explanation in any other section, you have violated this rule. ⚠️ **D14:** If the user has cited a MyKinsta dashboard "Server cache" number that differs from the log-derived HIT rate, acknowledge the gap here: state both numbers, explain the scope/window difference, and note which is the authoritative full-day metric.
    - **Bot Traffic Strategy** (`<!-- LLM:BOT_STRATEGY -->`) — table (bot | requests | % | verdict | evidence) with Totals row. Per Conciseness Directive 2, if >70% of bots resolve to the same verdict, collapse them into one summary row (`"✅ Keep (N bots, no action — see Part 2 for the full list)"`) and itemize only the outliers (Block/Monitor/Throttle). **Note:** Directive 2 applies to THIS Part 1 table only — the auto-generated per-category bot tables in Part 2 are the full evidence appendix and must list every bot individually; do not collapse those. After writing the Part 1 table, inject a **Verdict** column into every auto-generated bot table in Part 2 using the exact verdict from this Strategy table (`✅ Keep` / `🔧 Block` / `👀 Monitor` / `🔧 Throttle`). ⚠️ **D5:** Precede table with one-line takeaway. **D12:** Bytespider verdict MUST state whether site has ZH content — if yes → `✅ Keep` (Doubao, China's #1 search engine); if no → state reason explicitly, never default to vague `👀 Monitor`.
    - **Concentrated Traffic Spikes & Bursts** (`<!-- LLM:BURST_CARDS -->`) — Event/Analysis/Source/Actions card format. Use 🔧 unless active attack. Name source IP/bot and target URL(s) explicitly. If none: `✅ No concentrated bursts.`
    - **Traffic Anomalies** (`<!-- LLM:TRAFFIC_ANOMALIES -->`) — card format, one per spike/pattern, with admin/owner local-time conversion per `site-context.md`. If none: `✅ Traffic within normal diurnal variation.` ⚠️ **D9:** Don't call cache HIT "anomalous" for cold-start window. **D10:** Cite by name, don't re-explain the purge.
@@ -818,19 +839,19 @@ Step 6's Analyst Commentary, At a Glance, and silent final review are already wr
 since the PDF is a snapshot of whatever the Markdown file contains at the moment it runs:
 
 ```bash
-# Default: Typst engine (Quarto's bundled pandoc + Typst, no extra deps)
+# Default: Chromium engine (md-to-pdf + system Chromium, best visual design, A4)
 bash .agents/skills/kinsta-logs/scripts/export_pdf.sh "$REPORT_PATH"
 
-# Chromium engine (md-to-pdf + system Chromium, best visual design, A4)
-bash .agents/skills/kinsta-logs/scripts/export_pdf.sh --engine chromium "$REPORT_PATH"
+# Typst engine (Quarto's bundled pandoc + Typst, no extra deps)
+bash .agents/skills/kinsta-logs/scripts/export_pdf.sh --engine typst "$REPORT_PATH"
 ```
 
 Two engines supported:
 
 | Engine | Command | Deps | Best For |
 |---|---|---|---|
-| `typst` (default) | `quarto pandoc ... --pdf-engine=typst` | Quarto only | Clean typography, no extra installs |
-| `chromium` | `npx md-to-pdf` + system Chromium | Chromium at `/usr/bin/chromium` | Visual design, compact layout, A4 |
+| `chromium` **(default)** | `npx md-to-pdf` + system Chromium | Chromium at `/usr/bin/chromium` | Visual design, compact layout, A4 |
+| `typst` | `quarto pandoc ... --pdf-engine=typst` | Quarto only | Clean typography, no extra installs |
 
 Output is `{report_path minus .md}.pdf` in the same `reports/` folder. If the chosen engine's
 dependencies aren't found, the script exits with a warning — the Markdown report is the primary
@@ -921,8 +942,8 @@ per Step 7) and whether the report was emailed.
 | [`scripts/analyze_logs.py`](scripts/analyze_logs.py) | Log analysis + cross-file correlation, including per-bot URL/IP-concentration ("bursts"), ASN/hosting-provider/reverse-DNS detection, and grouped status codes (local parsing is deterministic; geo-IP/ASN/PTR lookups are not — see `--no-geoip`). **Always regenerates the full report from scratch**, and writes it to `~/Downloads/kinsta-logs/reports/` (not `$DIR`) — see Step 3's scratch-testing warning and the Troubleshooting entry above | **Execute** in Step 3 |
 | [`scripts/probe_urls.py`](scripts/probe_urls.py) | Live HTTP probe (status/timing/headers) — a real-time snapshot, not historical. Run twice: baseline (fixed URLs, Step 2) and targeted (dynamic URLs from findings, Step 4) | **Execute** in Steps 2 & 4 |
 | [`scripts/verify_urls.py`](scripts/verify_urls.py) | Post-generation mechanical URL verification — diffs every URL in LLM-authored commentary against source files (probe JSON, site-context.md, report data tables). Catches transliteration errors that are invisible to spell-check | **Execute** in Step 6.10a — mandatory, do not skip |
-| [`scripts/export_pdf.sh`](scripts/export_pdf.sh) | Converts the final Markdown report to PDF via one of two engines: `typst` (default, Quarto pandoc+Typst) or `chromium` (md-to-pdf + system Chromium) | **Execute** in Step 7, after Step 6 is fully written |
-| [`scripts/report.css`](scripts/report.css) | Sans-serif report stylesheet applied by the `chromium` engine — larger body text (13px), compact tables (11px), professional typography | Used automatically by `export_pdf.sh --engine chromium` |
+| [`scripts/export_pdf.sh`](scripts/export_pdf.sh) | Converts the final Markdown report to PDF via one of two engines: `chromium` (default, md-to-pdf + system Chromium) or `typst` (Quarto pandoc+Typst) | **Execute** in Step 7, after Step 6 is fully written |
+| [`scripts/report.css`](scripts/report.css) | Sans-serif report stylesheet applied by the `chromium` engine (default) — larger body text (13px), compact tables (11px), professional typography | Used automatically by `export_pdf.sh` |
 | [`scripts/send_report_email.py`](scripts/send_report_email.py) | Sends the PDF report as email attachment via SMTP (Gmail by default). Merges non-sensitive fields from [`config/email.json`](config/email.json) (recipients, subject, signature) with SMTP credentials from `~/.config/kinsta-log-analyzer/email.json` | **Execute** in Step 8 (optional), if the user chooses to email the report |
 | [`config/email.json`](config/email.json) | Non-sensitive email fields: `from_email`, `to_emails`, `subject`, `body_signature`. Lives in the skill folder; version-controlled | Edit directly to change recipients or subject |
 | [`config/email.json.example`](config/email.json.example) | Template for `~/.config/kinsta-log-analyzer/email.json` — SMTP credentials only (`smtp_host`, `smtp_port`, `username`, `password`). Not version-controlled | Copy to `~/.config/kinsta-log-analyzer/email.json` and fill in credentials |
@@ -935,8 +956,8 @@ per Step 7) and whether the report was emailed.
 ## Configuration
 Reads credentials from `.roo/mcp.json` → `mcpServers.kinsta.env`. Kinsta Knowledge Base lookups
 (Step 6.6) use the `tavily` MCP server (`tavily-search`), also configured in `.roo/mcp.json`.
-PDF export (Step 7) supports two engines: `typst` (default, Quarto pandoc+Typst, no extra deps)
-and `chromium` (md-to-pdf + system Chromium at `/usr/bin/chromium`). Switch with `--engine`.
+PDF export (Step 7) supports two engines: `chromium` (default, md-to-pdf + system Chromium at `/usr/bin/chromium`, best visual design, A4)
+and `typst` (Quarto pandoc+Typst, no extra deps). Switch with `--engine`.
 
 ## Privacy & Retention
 - Visitor IPs from the access/error logs are written to disk under `~/Downloads/kinsta-logs/` and are not automatically cleaned up — periodically prune old log/report files if this is a concern.
