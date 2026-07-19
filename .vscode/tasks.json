@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🚀 Deploy from GitHub to Kinsta PBS Production",
+            "type": "shell",
+            "command": "ssh pbservicesge@89.168.108.245 -p 51137 \"bash ~/public/wp-content/plugins/fralenuvole/deploy.sh\"",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}
