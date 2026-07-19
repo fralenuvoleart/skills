@@ -4,9 +4,6 @@
     "phpsab.executablePathCBF": "vendor/bin/phpcbf",
     "phpsab.composerJsonPath": "composer.json",
     "phpstan.config": ".dev/phpstan.neon",
-    "intelephense.environment.includePaths": [
-        "${workspaceFolder}/.dev/stubs"
-    ],
     "intelephense.files.exclude": [
         "vendor/**"
     ],
