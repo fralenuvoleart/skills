@@ -653,7 +653,9 @@ def generate_report(site_name, error_findings, error_meta, access_data,
         # than timedelta's default "H:MM:SS" — seconds add no value for a report read at a
         # glance and only invite false precision.
         if not (first and last):
-            return f"{n}. **{label}:** not available this run"
+            if label == "Error log" and error_meta is not None:
+                return f"{n}. **{label}:** No errors found in this window."
+            return f"{n}. **{label}:** Not fetched in this run."
         span = last - first
         total_min = int(span.total_seconds() // 60)
         hh, mm = divmod(total_min, 60)
@@ -1287,11 +1289,20 @@ def generate_report(site_name, error_findings, error_meta, access_data,
         if error_codes:
             L.append("### Errors by Status Code — Drill-Down")
             L.append("")
+            STATUS_DESC = {
+                400: "Bad Request — malformed syntax",
+                403: "Forbidden — access denied by server",
+                404: "Not Found — resource doesn't exist",
+                405: "Method Not Allowed — wrong HTTP verb",
+                410: "Gone — permanently removed",
+            }
             for code in error_codes:
                 urls = status_urls[code]
                 ips = status_ips.get(code, set())
                 total_code = sum(urls.values())
                 L.append(f"**{code}** — {total_code} requests from {len(ips)} distinct IP(s)")
+                if code in STATUS_DESC:
+                    L.append(f"*({STATUS_DESC[code]})*")
                 L.append("")
                 L.append("| URL | Count |")
                 L.append("|---|---|")
@@ -1488,6 +1499,9 @@ def main():
         error_findings, ts_range, ip_counter, error_entries, scanner_paths, scanner_ips = \
             analyze_error_log(err_filtered)
         error_meta = {"timerange": ts_range, "total_lines": len(err_filtered.split("\n"))}
+    elif not err_err or (err_err == "file not found"):
+        # File missing or API succeeded but empty — not a fetch failure
+        error_meta = {"total_lines": 0}
     if acc_filtered:
         access_data = analyze_access_log(acc_filtered)
         access_entries = access_data.get("entries", [])
