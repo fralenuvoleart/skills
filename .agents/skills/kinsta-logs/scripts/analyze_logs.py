@@ -522,13 +522,16 @@ def analyze_access_log(logs):
             "last_ts": max(access_ts) if access_ts else None}
 
 def analyze_cache_log(logs):
-    hits = len(re.findall(r"\bHIT KINSTAWP", logs))
-    misses = len(re.findall(r"\bMISS KINSTAWP", logs))
-    bypasses = len(re.findall(r"\bBYPASS KINSTAWP", logs))
+    # Exclude localhost (::1) — internal WP-Cron/health checks, not real cache traffic
+    filtered = "\n".join(line for line in logs.split("\n") if " ::1 " not in line)
+    hits = len(re.findall(r"\bHIT KINSTAWP", filtered))
+    misses = len(re.findall(r"\bMISS KINSTAWP", filtered))
+    bypasses = len(re.findall(r"\bBYPASS KINSTAWP", filtered))
     total = hits + misses + bypasses
     if total == 0: return None
     entries = []
     for m in re.finditer(r"\[([^\]]+)\] (HIT|MISS|BYPASS) KINSTAWP(?:_MOBILE)? (\S+) ([A-Z]+) \"([^\"]+)\"", logs):
+        if m.group(3) == "::1": continue  # skip localhost
         ts = parse_apache_ts(m.group(1))
         entries.append({"ts": ts, "status": m.group(2), "ip": m.group(3), "url": norm(m.group(5))})
     cache_ts = [e["ts"] for e in entries if e["ts"]]

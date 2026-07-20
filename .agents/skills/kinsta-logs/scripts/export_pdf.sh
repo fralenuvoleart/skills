@@ -2,15 +2,15 @@
 # Export a Kinsta Health Report (Markdown) to PDF.
 #
 # Supports two engines:
-#   typst    — Quarto's bundled pandoc + Typst (default, no extra deps)
-#   chromium — md-to-pdf via npx + system Chromium (CSS-friendly, best for visual design)
+#   chromium — md-to-pdf via npx + system Chromium (default, CSS-friendly, best for visual design)
+#   typst    — Quarto's bundled pandoc + Typst (fallback, no extra deps)
 #
-# Usage: export_pdf.sh [--engine typst|chromium] <path/to/report.md>
+# Usage: export_pdf.sh [--engine chromium|typst] <path/to/report.md>
 # Output: <path/to/report>.pdf (same directory, same basename, .pdf extension)
 
 set -euo pipefail
 
-ENGINE="typst"
+ENGINE="chromium"
 MD_PATH=""
 
 while [[ $# -gt 0 ]]; do
