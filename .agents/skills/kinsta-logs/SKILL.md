@@ -92,9 +92,9 @@ after analysis finishes. Only the *dynamic* URLs (chosen from findings) wait for
    [`references/site-context.md`](references/site-context.md).
 
    ```bash
-   python3 .agents/skills/kinsta-logs/scripts/probe_baseline.py
+   python3 .agents/skills/kinsta-logs/scripts/probe_baseline.py --dir "$DIR" --timestamp "$TS"
    ```
-   *Note: This script reads the `.run_state.json` file to know where to save the output and automatically extracts the correct URLs from `site-context.md`.*
+   *Note: This script automatically extracts the correct URLs from `site-context.md`.*
 
 **Fetch strategy** (implemented by the script, run in parallel):
 
