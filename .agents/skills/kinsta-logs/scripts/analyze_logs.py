@@ -1461,13 +1461,28 @@ def main():
             sys.exit(1)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("error_file")
-    parser.add_argument("access_file")
-    parser.add_argument("cache_file", nargs="?")
+    parser.add_argument("--error_file", help="Path to error log JSON")
+    parser.add_argument("--access_file", help="Path to access log JSON")
+    parser.add_argument("--cache_file", help="Path to cache log JSON")
     parser.add_argument("--hours", type=int, default=24)
     parser.add_argument("--no-geoip", action="store_true",
                          help="Disable network geo-IP lookups to ipinfo.io (privacy/speed/determinism)")
     args = parser.parse_args()
+
+    # If files aren't provided, try to read from state
+    if not args.error_file or not args.access_file:
+        skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        state_file = os.path.join(skill_dir, ".run_state.json")
+        if os.path.exists(state_file):
+            with open(state_file, "r") as f:
+                state = json.load(f)
+                args.error_file = state.get("error_log")
+                args.access_file = state.get("access_log")
+                args.cache_file = state.get("cache_log")
+        
+        if not args.error_file or not args.access_file:
+            print("Error: Must provide --error_file and --access_file, or run orchestrator.py first.", file=sys.stderr)
+            sys.exit(1)
 
     global GEOIP_ENABLED
     GEOIP_ENABLED = not args.no_geoip
@@ -1516,36 +1531,106 @@ def main():
                              cache_data, cross_results, scanner_paths, args.hours, data_errors,
                              env_name=env_name)
 
-    # Reports live in a single flat ~/Downloads/kinsta-logs/reports/ folder (not nested per
-    # site/env like the raw logs) — the filename itself encodes site/env/timestamp so reports
-    # stay unique and easy to browse chronologically without digging into subfolders.
-    report_dir = os.path.expanduser("~/Downloads/kinsta-logs/reports")
-    os.makedirs(report_dir, exist_ok=True)
-    ts_raw = "_".join(os.path.basename(args.error_file).split("_")[:2])
-    try:
-        ts_compact = datetime.strptime(ts_raw, "%Y-%m-%d_%H%M%S").strftime("%Y%m%d%H%M")
-    except ValueError:
-        ts_compact = ts_raw.replace("-", "").replace("_", "")[:12]
-    report_path = os.path.join(report_dir, f"report_{site_name}_{env_name}_{ts_compact}.md")
-    with open(report_path, "w") as f: f.write(report)
+    # --- DYNAMIC CONTEXT INJECTION ---
+    # Analyze the findings and inject specific rules from the reference files
+    # so the LLM doesn't have to read the entire encyclopedia every time.
+    llm_instructions = []
+    
+    # 1. Bot Taxonomy Rules
+    if access_data and access_data.get("bot_data"):
+        bots_found = list(access_data["bot_data"].keys())
+        if "Bytespider" in bots_found:
+            llm_instructions.append(
+                "RULE (Bytespider): You must classify Bytespider based on ZH-content relevance. "
+                "If the site has Chinese-language content (/zh/), it is expected search-engine traffic -> ✅ Keep. "
+                "If the site has NO ZH content, state that explicitly -> 🔧 Block. "
+                "Never default to 'Monitor' without stating the site's ZH-content relevance explicitly."
+            )
+        if "PetalBot" in bots_found:
+            llm_instructions.append(
+                "RULE (PetalBot): Huawei's Petal Search crawler. Assess based on audience relevance. "
+                "If the site targets users in regions where Huawei devices are common, consider keeping. "
+                "Otherwise, it is low-value -> 🔧 Block."
+            )
+        if any(b in bots_found for b in ["AhrefsBot", "SemrushBot", "MJ12bot", "Dataprovider"]):
+            llm_instructions.append(
+                "RULE (SEO Crawlers): AhrefsBot, SemrushBot, MJ12bot, Dataprovider are third-party commercial crawlers. "
+                "They provide zero SEO value to this site. If volume is high, recommend 🔧 Block or 🔧 Throttle."
+            )
+        if any(b in bots_found for b in ["ChatGPT-User", "GPTBot", "ClaudeBot", "Anthropic-ai", "PerplexityBot", "OAI-SearchBot"]):
+            llm_instructions.append(
+                "RULE (AI Bots): Check concentration. If highly concentrated on a few URLs, it might be targeted scraping. "
+                "If distributed across many URLs, it's likely bulk crawling. Recommend 🔧 Block if providing no value."
+            )
 
-    print(report)
-    print(f"\n📄 {report_path}")
+    # 2. Cache Rules
+    if cache_data:
+        hit_pct = cache_data["HIT"] / cache_data["total"] * 100 if cache_data["total"] > 0 else 0
+        if hit_pct < 50:
+            llm_instructions.append(
+                "RULE (Cache): HIT rate is below 50%. Check for common bypass reasons: "
+                "1. `__cf_bm` cookie (Cloudflare Bot Management). "
+                "2. Query strings (e.g., `?fbclid=`, `?gclid=`). "
+                "3. Polylang or other language redirects. "
+                "If you find `__cf_bm`, explain it ONCE in Cache Root Cause, and cite it by name elsewhere."
+            )
 
-    # Update state file with report path
+    # 3. Error Rules
+    if error_findings.get("critical") or error_findings.get("medium"):
+        llm_instructions.append(
+            "RULE (PHP Errors): You found PHP errors. Do NOT recommend code-level fixes referencing specific files/lines. "
+            "The report targets management. Recommend flagging the specific error to the development team."
+        )
+    
+    if access_data and access_data.get("fivexx"):
+        llm_instructions.append(
+            "RULE (5xx Errors): You found 5xx errors. Check if they correlate with high traffic spikes or specific slow pages. "
+            "Recommend checking PHP worker limits in MyKinsta -> Resource Usage."
+        )
+
+    # Output context.json instead of Markdown
+    context_data = {
+        "site_name": site_name,
+        "env_name": env_name,
+        "hours": args.hours,
+        "error_findings": error_findings,
+        "error_meta": error_meta,
+        "access_data": access_data,
+        "cache_data": cache_data,
+        "cross_results": cross_results,
+        "scanner_paths": scanner_paths,
+        "data_errors": data_errors,
+        "report_skeleton": report, # Keep the skeleton for now to ease transition, but we'll move away from it
+        "llm_instructions": llm_instructions
+    }
+
+    # Output to workspace-relative path
+    output_dir = os.path.dirname(args.error_file)
+    context_path = os.path.join(output_dir, "context.json")
+    
+    # We need to handle datetime objects in the dict before json serialization
+    def default_serializer(obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, set):
+            return list(obj)
+        return str(obj)
+
+    with open(context_path, "w") as f:
+        json.dump(context_data, f, indent=2, default=default_serializer)
+
+    print(f"\n📄 Context data written to {context_path}")
+
+    # Update state file with context path
     state_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".run_state.json")
     if os.path.exists(state_file):
         try:
             with open(state_file, "r") as f:
                 state = json.load(f)
-            state["report_path"] = report_path
+            state["context_path"] = context_path
             with open(state_file, "w") as f:
                 json.dump(state, f, indent=2)
         except Exception as e:
             print(f"Warning: Could not update state file: {e}", file=sys.stderr)
-
-    import subprocess as sp
-    try: sp.run(["code", report_path], check=False, timeout=5)
-    except Exception: pass
 
 if __name__ == "__main__": main()
