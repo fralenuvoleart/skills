@@ -39,6 +39,11 @@ The report targets **management**, not developers. Every finding must include a 
 
 ---
 
+## Architecture Blueprint
+This skill uses the **Orchestrate-Analyze-Build (OAB)** pattern. See [`references/architecture-blueprint.md`](references/architecture-blueprint.md) for a detailed explanation of this architecture and how to use it as a template for future skills.
+
+---
+
 ## Kinsta API Constraints
 
 **Read [`references/kinsta-api.md`](references/kinsta-api.md) before fetching or interpreting logs.** It documents API behavior (line-based, no time-window filtering, 20,000-line cap), log rotation handling, line-count coverage estimates, and the critical origin-vs-edge-cache scope distinction that must be stated in every report.
