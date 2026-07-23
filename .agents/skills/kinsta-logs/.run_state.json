@@ -6,7 +6,7 @@
   "access_log": "/home/francesco/Downloads/kinsta-logs/pbservices.ge/live/2026-07-23_030302_access.json",
   "cache_log": "/home/francesco/Downloads/kinsta-logs/pbservices.ge/live/2026-07-23_030302_cache.json",
   "probe_baseline": "/home/francesco/Downloads/kinsta-logs/pbservices.ge/live/2026-07-23_030357_probe_baseline.json",
-  "context_path": "/home/francesco/Downloads/kinsta-logs/pbservices.ge/live/2026-07-23_030302_context.json",
+  "context_path": "/mnt/backup/BACKUP/WWW/SKILLS/.agents/skills/kinsta-logs/scripts/tests/fixtures/error.json_context.json",
   "probe_targeted": "/home/francesco/Downloads/kinsta-logs/pbservices.ge/live/2026-07-23_030302_probe_targeted.json",
-  "report_path": "/home/francesco/Downloads/kinsta-logs/reports/report_pbservices.ge_live_202607231614.md"
+  "report_path": "/home/francesco/Downloads/kinsta-logs/reports/report_tests_fixtures_202607231640.md"
 }

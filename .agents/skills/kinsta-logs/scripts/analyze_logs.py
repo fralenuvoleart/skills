@@ -958,7 +958,7 @@ def generate_report(site_name, error_findings, error_meta, access_data,
     L.append("")
     L.append("<!-- LLM:BOT_STRATEGY -->")
     L.append("")
-    L.append("### 📈 Concentrated Traffic Spikes ### Concentrated Traffic Spikes & Bursts Bursts")
+    L.append("### 📈 Concentrated Traffic Spikes & Bursts")
     L.append("")
     L.append("<!-- LLM:BURST_CARDS -->")
     L.append("")
@@ -1479,7 +1479,7 @@ FORBIDDEN_SECTIONS = [
 ]
 
 CARD_SECTIONS_REQUIRING_INCIDENT_BULLET = [
-    "### 🛡️ Attack/Security Findings", "### 📈 Concentrated Traffic Spikes ### Concentrated Traffic Spikes & Bursts Bursts",
+    "### 🛡️ Attack/Security Findings", "### 📈 Concentrated Traffic Spikes & Bursts",
     "### 📉 Traffic Anomalies",
 ]
 
