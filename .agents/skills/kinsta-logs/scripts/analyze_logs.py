@@ -49,8 +49,14 @@ def ip_country(ip):
     try:
         r = subprocess.run(["curl", "-s", "--connect-timeout", "2", "--max-time", "3",
                            f"https://ipinfo.io/{ip}/country"], capture_output=True, text=True)
-        cc = r.stdout.strip()[:2] if r.stdout.strip() else "?"
-        if cc == "?": _LOOKUP_STATS["empty"] += 1
+        raw = r.stdout.strip()
+        # JSON response = error (rate limit 429, etc.), not valid country data
+        if raw.startswith("{"):
+            _LOOKUP_STATS["empty"] += 1
+            cc = "?"
+        else:
+            cc = raw[:2] if raw else "?"
+            if cc == "?": _LOOKUP_STATS["empty"] += 1
         result = (cc, flag_emoji(cc))
     except Exception:
         _LOOKUP_STATS["empty"] += 1
@@ -80,8 +86,14 @@ def ip_org(ip):
     try:
         r = subprocess.run(["curl", "-s", "--connect-timeout", "2", "--max-time", "3",
                            f"https://ipinfo.io/{ip}/org"], capture_output=True, text=True)
-        org = r.stdout.strip()
-        if not org: _LOOKUP_STATS["empty"] += 1
+        raw = r.stdout.strip()
+        # JSON response = error (rate limit 429, etc.), not valid org data
+        if raw.startswith("{"):
+            _LOOKUP_STATS["empty"] += 1
+            org = ""
+        else:
+            org = raw
+            if not org: _LOOKUP_STATS["empty"] += 1
         is_hosting = bool(_HOSTING_HINTS.search(org)) if org else False
         result = (org, is_hosting)
     except Exception:
@@ -119,8 +131,14 @@ def ip_hostname(ip):
     try:
         r = subprocess.run(["curl", "-s", "--connect-timeout", "2", "--max-time", "3",
                            f"https://ipinfo.io/{ip}/hostname"], capture_output=True, text=True)
-        hostname = r.stdout.strip()
-        if not hostname: _LOOKUP_STATS["empty"] += 1
+        raw = r.stdout.strip()
+        # JSON response = error (rate limit 429, etc.), not valid hostname data
+        if raw.startswith("{"):
+            _LOOKUP_STATS["empty"] += 1
+            hostname = ""
+        else:
+            hostname = raw
+            if not hostname: _LOOKUP_STATS["empty"] += 1
         is_customer_vm = bool(_CLOUD_CUSTOMER_VM_HINTS.search(hostname)) if hostname else False
         result = (hostname, is_customer_vm)
     except Exception:
