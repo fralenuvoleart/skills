@@ -114,6 +114,16 @@ window and that it represents the Nginx page-cache subset. If the window is <6h 
 dashboard number: cite both, explain the gap (time window + scope), and identify the dashboard as
 the authoritative full-day metric.
 
+### D15 — Tone Calibration
+
+Avoid both extremes, every time. This has been a repeated failure mode in both directions and must be checked explicitly before finalizing any Overall Assessment, At a Glance status line, or card verdict:
+- **Too alarmist:** dressing up routine housekeeping (a stale cache entry, a low-value crawler, a missing trailing slash) in emergency language, or a severity icon one tier higher than the evidence supports (see the icon table below — 🔴 is reserved, not a default).
+- **Too dismissive:** the opposite failure, and equally wrong — waving away a real, measurable, currently-below-target metric (e.g. a cache HIT rate sitting at 24–46% against a >50% target) with casual language like "minor housekeeping, nothing urgent" or "nothing to see here." A below-target metric with a concrete, evidence-backed fix is a genuine 🟡 finding worth an accurate, specific description — not a shrug.
+- **The correct register:** state the actual measured severity in plain, professional, objective terms, exactly as supported by the evidence — no more, no less. "Cache HIT rate is 24%, well below the >50% target, driven by two identified causes — fixable, but currently costing real performance" is calibrated. "Nothing urgent" is not, when a metric is sitting at a third of target.
+- **Avoid cheerleading-style status openers even when a real caveat follows** — e.g. "Overall status: healthy and secure, with one issue worth fixing" still reads as dismissive by leading with reassurance before the finding. Prefer a neutral, factual lead: **"No active security incidents; [metric] is below target and requires attention"** — state what was and wasn't found, in that order, without an adjective doing the reader's judgment for them.
+- **Never use evaluative/judgment-laden labels — state measured severity, not a verdict on merit.** Words like "worst"/"best"/"terrible"/"great" attach a value judgment the underlying data doesn't actually support (severity icons are threshold-derived facts; "worst" implies a ranked comparison the report never actually computed). Use objective, measured language instead: "highest-severity finding" not "the worst finding"; "the metric furthest below target" not "the worst metric." This applies everywhere a finding is singled out — At a Glance headlines, card titles, and the Convergent Cross-Signals summary alike.
+- Re-read every summary line against this test before finalizing: *would someone who only reads this one sentence come away with an accurate impression of how serious this actually is — not more dramatic, not more reassuring, and not a value judgment dressed up as a measurement?*
+
 ---
 
 ## Domain-Specific Rules

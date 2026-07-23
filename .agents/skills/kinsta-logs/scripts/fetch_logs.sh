@@ -49,3 +49,17 @@ fetch_one "kinsta-cache-perf" 1000 3 "$DIR/${TS}_cache.json"  &
 wait
 
 echo "Logs written to ${DIR}/${TS}_{error,access,cache}.json"
+
+# Write state for subsequent steps
+STATE_FILE=".agents/skills/kinsta-logs/.run_state.json"
+cat <<EOF > "$STATE_FILE"
+{
+  "env_id": "$ENV_ID",
+  "dir": "$DIR",
+  "timestamp": "$TS",
+  "error_log": "$DIR/${TS}_error.json",
+  "access_log": "$DIR/${TS}_access.json",
+  "cache_log": "$DIR/${TS}_cache.json"
+}
+EOF
+echo "State written to $STATE_FILE"

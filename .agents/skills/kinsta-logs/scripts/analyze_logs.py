@@ -1532,6 +1532,18 @@ def main():
     print(report)
     print(f"\n📄 {report_path}")
 
+    # Update state file with report path
+    state_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".run_state.json")
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, "r") as f:
+                state = json.load(f)
+            state["report_path"] = report_path
+            with open(state_file, "w") as f:
+                json.dump(state, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not update state file: {e}", file=sys.stderr)
+
     import subprocess as sp
     try: sp.run(["code", report_path], check=False, timeout=5)
     except Exception: pass

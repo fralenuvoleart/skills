@@ -65,6 +65,19 @@ Contains all analyst-written subsections below. LLM fills each via its marker.
 - **Format:** Card format for ALL items. `#### 🔧|ℹ️ [Priority] — [Short title]` with `- **Event:**`, `- **URL(s):**`, `- **Analysis:**`, `- **Source:**`, `- **Actions:**` bullets. Actions are presented as a bullet list; "No action required ✅" is always on its own bold line, with its description/explanation on a new indented line. Low-priority items may group into a single `#### ℹ️ Low Priority — Miscellaneous` card with one bullet per item. Never bare bullets without a heading.
 - **If empty:** "✅ No actionable 404s or client errors detected."
 
+### Internal Framework (Analyst Checklist)
+
+Structure every finding around four questions internally — What / Why / Who / How — this is the analytical spine you use to REASON through each finding, but it is not what the reader sees. The **visible labels in the report are always Event / Analysis / Source / Actions** — "What/Why/Who/How" is your private checklist, never printed:
+
+| Internal question | Visible label | Answers |
+|---|---|---|
+| What? | **Event** | The flagged finding, stated with its exact evidence (numbers, URLs, IPs). |
+| Why? | **Analysis** | Why it's suspicious or anomalous — cross-referencing bot-taxonomy.md/site-context.md/probe results as applicable. Ordinary/expected activity gets "why this is NOT an anomaly" instead. |
+| Who? | **Source** | The source (bot name, IP, or "unknown") PLUS an explicit classification tier (`Safe` / `Benign` / `Suspicious` / `Malicious`) — never just prose judgment. |
+| How? | **Actions** | The concrete action, sourced from live Kinsta KB documentation, a MyKinsta-panel step, or **bold "No action required ✅"** on its own line (description on new indented line) — never a canned tip disconnected from this finding's actual evidence. |
+
+Cross-cutting lenses to apply this framework to: attack patterns (spam injection, xmlrpc probing), traffic anomalies (hour spikes — state the multiplier, convert to local time), bot strategy (per bot-taxonomy.md), cache root cause (cite top-missed URLs/query params/probe header evidence), 404/error triage, and IP/geo sanity (hosting/proxy flags).
+
 ---
 
 ## Part 2: Technical Appendix

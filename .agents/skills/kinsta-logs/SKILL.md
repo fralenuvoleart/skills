@@ -48,21 +48,19 @@ The report targets **management**, not developers. Every finding must include a 
 
 ### Step 1: Discover Sites & Environments
 
-> ⚠️ **CRITICAL: NEVER use `mcp--kinsta--*` tool functions.** Roo Code strips dots from the tool names (e.g. `mcp--kinsta--kinstasiteslist` → `kinstasiteslist`), which causes a "Tool does not exist" error every time. **Always use `execute_command` with JSON-RPC via stdio instead** — pipe the JSON-RPC request into `npx -y kinsta-mcp@1.0.3`. This applies to EVERY Kinsta API call in this skill (Steps 1, 2, 3, and any ad-hoc lookups). The `scripts/fetch_logs.sh` script already does this internally; the only manual `execute_command` you need is the site/environment discovery call below.
-
 1. Read `.roo/mcp.json` for `KINSTA_API_KEY` and `KINSTA_COMPANY_ID`.
-2. Discover sites via JSON-RPC (`execute_command`, not `mcp--kinsta--*`):
+2. Discover sites via JSON-RPC using the provided script:
 
    ```bash
-   echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"kinsta.sites.list","arguments":{"include_environments":true}}}' | KINSTA_API_KEY="..." KINSTA_COMPANY_ID="..." npx -y kinsta-mcp@1.0.3 2>/dev/null
+   KINSTA_API_KEY="..." KINSTA_COMPANY_ID="..." bash .agents/skills/kinsta-logs/scripts/list_sites.sh
    ```
 3. **If the user specified a site name**, extract the site ID and live environment ID from the JSON output.
 4. **If no site specified**:
    - Check conversation history for a previously analyzed site — reuse it.
-   - **Default site: `pbservices.ge`.** If no conversation history exists and the user didn't specify a site, analyze pbservices.ge without asking. Announce it briefly: "Analyzing pbservices.ge (default site)."
+   - **Default site:** Read `config/defaults.json` to get the default site (e.g., `pbservices.ge`). If no conversation history exists and the user didn't specify a site, analyze the default site without asking. Announce it briefly: "Analyzing [default site] (default site)."
    - Only ask which site if the user explicitly requests a different site or if conversation history points to a different site.
-5. Default to the **live** environment.
-5. **Read [`references/site-context.md`](references/site-context.md)** — it records the admin's
+5. Default to the **live** environment (or the default environment from `config/defaults.json`).
+6. **Read [`references/site-context.md`](references/site-context.md)** — it records the admin's
    and business owner's timezones and each site's confirmed primary visitor market. This is
    required context for interpreting traffic-hour patterns and geo-IP results correctly in the analyst steps (Steps 7–14);
    skipping it leads to misreading normal local business hours as "anomalies." If the site being
@@ -87,35 +85,16 @@ after analysis finishes. Only the *dynamic* URLs (chosen from findings) wait for
    KINSTA_API_KEY="..." KINSTA_COMPANY_ID="..." \
      bash .agents/skills/kinsta-logs/scripts/fetch_logs.sh "$ENV_ID" "$DIR" "$TS"
    ```
+   *Note: This script now writes a `.run_state.json` file to manage state for subsequent steps.*
 
 2. **At the same time** (a separate tool call, not sequentially blocking on step 1), **execute**
-   [`scripts/probe_urls.py`](scripts/probe_urls.py) against the fixed sample URL list from
-   [`references/site-context.md`](references/site-context.md) → "Known Probe URLs" for this site.
+   [`scripts/probe_baseline.py`](scripts/probe_baseline.py) to probe the fixed sample URL list from
+   [`references/site-context.md`](references/site-context.md).
 
-   > 🚫 **CRITICAL — URLs MUST be extracted mechanically from `site-context.md`, NEVER retyped.**
-   > Transliterated URLs (Russian→Latin, Arabic→Latin, Chinese→Pinyin) are impossible to spell
-   > correctly from memory. Retyping a URL in the probe command WILL introduce a spelling error
-   > that makes the probe hit the wrong page, producing false 404 findings. Use the grep/sed
-   > extraction below — it reads the URLs directly from the source file without human re-typing.
-   
-   **Step 2a — Extract URLs mechanically from site-context.md:**
    ```bash
-   SITE_CONTEXT=".agents/skills/kinsta-logs/references/site-context.md"
-   # Extract the probe URL block for this site (between "### SITENAME" and the next "###" or "##")
-   PROBE_URLS=$(sed -n '/### pbservices\.ge/,/^### \|^## /p' "$SITE_CONTEXT" | grep '^https://' | tr '\n' ' ')
-   echo "Probe URLs: $PROBE_URLS"  # verify before running
+   python3 .agents/skills/kinsta-logs/scripts/probe_baseline.py
    ```
-
-   **Step 2b — Execute the probe using the extracted URLs:**
-   ```bash
-   python3 .agents/skills/kinsta-logs/scripts/probe_urls.py \
-     --output "$DIR/${TS}_probe_baseline.json" \
-     $PROBE_URLS
-   ```
-   
-   > The `$PROBE_URLS` variable contains the exact URLs from `site-context.md`, space-separated,
-   > extracted by `sed`/`grep` with zero human re-typing. The `echo` line lets you verify the
-   > extracted URLs before the probe runs.
+   *Note: This script reads the `.run_state.json` file to know where to save the output and automatically extracts the correct URLs from `site-context.md`.*
 
 **Fetch strategy** (implemented by the script, run in parallel):
 
@@ -135,8 +114,7 @@ after analysis finishes. Only the *dynamic* URLs (chosen from findings) wait for
 
 ### Step 3: Analyze
 Run the bundled script. **Default: last 24 hours.** Add `--hours N` for other windows. The script
-prints the generated report's path on its last line (`📄 <path>`) — capture it as `$REPORT_PATH`,
-since subsequent steps reference the report by that path, not by `$DIR`:
+prints the generated report's path on its last line (`📄 <path>`) and updates `.run_state.json`.
 ```bash
 # Default (24 hours):
 python3 .agents/skills/kinsta-logs/scripts/analyze_logs.py \
@@ -179,36 +157,18 @@ The script produces a **two-part report skeleton** with `<!-- LLM: -->` markers 
 
 ### Step 4: Targeted URL Probe (Dynamic, Post-Analysis)
 
-**Execute** [`scripts/probe_urls.py`](scripts/probe_urls.py) again — this second pass probes only
+**Execute** [`scripts/probe_targeted.py`](scripts/probe_targeted.py) — this second pass probes only
 the URLs that Step 3's analysis actually flagged, since those can't be known before analysis runs
 (unlike Step 2's fixed baseline probe). Both probe passes are real-time snapshots of right now, not
 the log window, and the Analyst Commentary (Steps 10–12) must state that distinction explicitly whenever it cites either one.
 
-> 🚫 **Same mechanical-extraction rule as Step 2 applies here — URLs come from the report file,
-> not from memory.** Use `grep`/`sed` on `$REPORT_PATH` to extract URLs, then pass the extracted
-> values to the probe command. Never type a URL that you read from the report.
-
-1. **Extract target URLs mechanically from `$REPORT_PATH`** — do NOT retype them:
+1. **Execute the targeted probe script:**
    ```bash
-   # Extract from the report's data tables (NOT from memory):
-   MISS_URL=$(grep -A1 'Pages Most Frequently Missing Cache' "$REPORT_PATH" | grep '^|' | head -1 | sed 's/.*`\([^`]*\)`.*/\1/')
-   # Slowest public page (skip /wp-admin/ entries — they require auth):
-   SLOW_URL=$(grep 'Slowest individual requests' "$REPORT_PATH" -A10 | grep '^|' | grep -v 'wp-admin' | head -1 | sed 's/.*`\([^`]*\)`.*/\1/')
-   # Top 404 URL (skip obvious spam-injection payloads):
-   ERR_URL=$(grep -A10 '404.*requests from' "$REPORT_PATH" | grep '^|' | head -1 | sed 's/.*`\([^`]*\)`.*/\1/')
-   echo "Target URLs: MISS=$MISS_URL  SLOW=$SLOW_URL  ERR=$ERR_URL"
+   python3 .agents/skills/kinsta-logs/scripts/probe_targeted.py
    ```
+   *Note: This script reads `.run_state.json` to find the report, extracts the target URLs mechanically, and runs the probe.*
 
-2. **Build the probe command using the extracted variables** — never type URLs inline:
-   ```bash
-   python3 .agents/skills/kinsta-logs/scripts/probe_urls.py \
-     --output "$DIR/${TS}_probe_targeted.json" \
-     "https://SITE_DOMAIN${MISS_URL}" \
-     "https://SITE_DOMAIN${SLOW_URL}" \
-     "https://SITE_DOMAIN${ERR_URL}"
-   ```
-   Replace `SITE_DOMAIN` with the actual site domain (e.g. `pbservices.ge`).
-3. **Read both probe JSON files** (`_probe_baseline.json` from Step 2 and `_probe_targeted.json`
+2. **Read both probe JSON files** (`_probe_baseline.json` from Step 2 and `_probe_targeted.json`
    from this step) and cross-match against the log-derived report:
    - Does the live `http_code` match what the log window showed for that URL? A mismatch (e.g.
      log shows `200`, live probe shows `404`) means content changed between the log window and
@@ -361,22 +321,7 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
 
 ### Step 9: Apply Internal Framework
 
-7. **Structure every finding around four questions internally — What / Why / Who / How** — this is
-   the analytical spine you use to REASON through each finding, but it is not what the reader sees.
-   The **visible labels in the report are always Event / Analysis / Source / Actions** (Step 10
-   spells out the exact template) — "What/Why/Who/How" is your private checklist, never printed:
-
-   | Internal question | Visible label | Answers |
-   |---|---|---|
-   | What? | **Event** | The flagged finding, stated with its exact evidence (numbers, URLs, IPs). |
-   | Why? | **Analysis** | Why it's suspicious or anomalous — cross-referencing bot-taxonomy.md/site-context.md/probe results as applicable. Ordinary/expected activity gets "why this is NOT an anomaly" instead. |
-   | Who? | **Source** | The source (bot name, IP, or "unknown") PLUS an explicit classification tier — see Step 10's tier scale — never just prose judgment. |
-   | How? | **Actions** | The concrete action, sourced from live Kinsta KB documentation (Steps 7–8), a MyKinsta-panel step, or **bold "No action required ✅"** on its own line (description on new indented line) — never a canned tip disconnected from this finding's actual evidence, and never anything derived from reading the hosted app's own source code (Step 8 forbids opening it at all). |
-
-   Cross-cutting lenses to apply this framework to: attack patterns (spam injection, xmlrpc
-   probing), traffic anomalies (hour spikes — state the multiplier, convert to local time per Step
-   6.3), bot strategy (per bot-taxonomy.md), cache root cause (cite top-missed URLs/query
-   params/probe header evidence), 404/error triage, and IP/geo sanity (hosting/proxy flags).
+7. **See [`references/report-structure.md`](references/report-structure.md) for the Internal Framework (Analyst Checklist).** Use this framework to REASON through each finding (What / Why / Who / How).
 
 ### Step 10: Fill Report Markers
 
@@ -390,15 +335,12 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
    2. Identify the dominant narrative: what ONE finding defines this run? (Cache failure? Bot surge? Security incident?)
    3. Order Part 1 sections by severity: 🔴 > 🟡 > 🔧 > ✅. Within same tier, order by impact magnitude. The script puts markers in a default order; you MUST reorder Part 1 sections so the most important finding leads.
    4. Fill each `<!-- LLM: -->` marker with content. Use `apply_diff` to replace `<!-- LLM:MARKER_NAME -->` with the actual section content.
-   5. After filling all markers, inject a **Verdict** column into every auto-generated bot table in Part 2. **Use `sed` for this — do NOT use `apply_diff`.** The `apply_diff` approach for Part 2 tables is unreliable because line numbers shift significantly after Part 1 commentary is filled in. The `sed` one-liner is deterministic and always works:
+   5. After filling all markers, inject a **Verdict** column into every auto-generated bot table in Part 2 using the provided script:
 
       ```bash
-      sed -i 's/| Bytespider | \(.*\) | ⏳ \*pending\* |/| Bytespider | \1 | 🔧 Block |/' "$REPORT_PATH"
-      sed -i 's/| Kinsta-Log-Analyzer-Probe | \(.*\) | ⏳ \*pending\* |/| Kinsta-Log-Analyzer-Probe | \1 | ✅ Self |/' "$REPORT_PATH"
-      sed -i 's/| ⏳ \*pending\* |/| ✅ Keep |/g' "$REPORT_PATH"
+      python3 .agents/skills/kinsta-logs/scripts/apply_verdicts.py
       ```
-
-      Run these three commands in order (Bytespider and Kinsta-Log-Analyzer-Probe first, then the catch-all fallback). If the Bot Strategy table assigned any other non-`Keep` verdict, add additional targeted `sed` lines for those bots before the catch-all. Verify with `grep -c '⏳' "$REPORT_PATH"` — result must be `0`.
+      *Note: This script reads `.run_state.json` to find the report and applies the verdicts robustly.*
 
    **Section format rules:**
 
@@ -410,37 +352,7 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
    without blank lines between them visually collapse into one paragraph in several renderers,
    which was the primary readability complaint against earlier versions of this skill's output.
 
-   **Tone calibration — avoid both extremes, every time.** This has been a repeated failure mode
-   in both directions and must be checked explicitly before finalizing any Overall Assessment,
-   At a Glance status line, or card verdict:
-   - **Too alarmist:** dressing up routine housekeeping (a stale cache entry, a low-value crawler,
-     a missing trailing slash) in emergency language, or a severity icon one tier higher than the
-     evidence supports (see the icon table below — 🔴 is reserved, not a default).
-   - **Too dismissive:** the opposite failure, and equally wrong — waving away a real, measurable,
-     currently-below-target metric (e.g. a cache HIT rate sitting at 24–46% against a >50% target)
-     with casual language like "minor housekeeping, nothing urgent" or "nothing to see here." A
-     below-target metric with a concrete, evidence-backed fix is a genuine 🟡 finding worth an
-     accurate, specific description — not a shrug.
-   - **The correct register:** state the actual measured severity in plain, professional, objective
-     terms, exactly as supported by the evidence — no more, no less. "Cache HIT rate is 24%, well
-     below the >50% target, driven by two identified causes — fixable, but currently costing real
-     performance" is calibrated. "Nothing urgent" is not, when a metric is sitting at a third of
-     target.
-   - **Avoid cheerleading-style status openers even when a real caveat follows** — e.g. "Overall
-     status: healthy and secure, with one issue worth fixing" still reads as dismissive by leading
-     with reassurance before the finding. Prefer a neutral, factual lead: **"No active security
-     incidents; [metric] is below target and requires attention"** — state what was and wasn't
-     found, in that order, without an adjective doing the reader's judgment for them.
-   - **Never use evaluative/judgment-laden labels — state measured severity, not a verdict on
-     merit.** Words like "worst"/"best"/"terrible"/"great" attach a value judgment the underlying
-     data doesn't actually support (severity icons are threshold-derived facts; "worst" implies a
-     ranked comparison the report never actually computed). Use objective, measured language
-     instead: "highest-severity finding" not "the worst finding"; "the metric furthest below
-     target" not "the worst metric." This applies everywhere a finding is singled out — At a
-     Glance headlines, card titles, and the Convergent Cross-Signals summary alike.
-   - Re-read every summary line against this test before finalizing: *would someone who only reads
-     this one sentence come away with an accurate impression of how serious this actually is — not
-     more dramatic, not more reassuring, and not a value judgment dressed up as a measurement?*
+   **Tone calibration — see [`references/conciseness-directives.md`](references/conciseness-directives.md) (D15).** Avoid both extremes (too alarmist, too dismissive).
 
    **Severity icon vocabulary — do not mix these two axes up:**
    | Icon | Reserved for |
@@ -467,7 +379,7 @@ approximation. The script has generated a two-part skeleton with `<!-- LLM: -->`
          [description/explanation on new indented line]]
    ```
 
-    **Conciseness & Consistency Directives — see [`references/conciseness-directives.md`](references/conciseness-directives.md).** Read this file in full before writing any report commentary. It defines 14 mandatory rules governing formatting, tone, citation, and domain-specific judgment. Several are grep-auditable in the Directive Compliance Audit (Step 13, below).
+    **Conciseness & Consistency Directives — see [`references/conciseness-directives.md`](references/conciseness-directives.md).** Read this file in full before writing any report commentary. It defines 15 mandatory rules governing formatting, tone, citation, and domain-specific judgment. Several are grep-auditable in the Directive Compliance Audit (Step 13, below).
 
   **Full section structure — see [`references/report-structure.md`](references/report-structure.md).** That file is the sole authoritative contract: it defines every section heading, format, conditional display rule, marker inventory, and permanently suppressed sections. Read it now before filling any markers.
 
