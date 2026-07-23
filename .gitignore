@@ -18,3 +18,4 @@ Thumbs.db
 .roo/mcp.json
 .directory
 __pycache__/
+.agents/skills/kinsta-logs/.run_state.json
