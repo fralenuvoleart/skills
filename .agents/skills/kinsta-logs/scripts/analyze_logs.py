@@ -434,6 +434,30 @@ def analyze_access_log(logs):
         [e for e in entries if e["rt"] > 0.001], key=lambda e: -e["rt"]
     )[:8]
 
+    # --- Path-Based Severity (High Value Paths) ---
+    # A 4s load time on /about is bad; a 4s load time on /checkout hurts revenue.
+    HIGH_VALUE_PATHS = re.compile(r"/checkout|/cart|/my-account|/pricing|/signup", re.IGNORECASE)
+    high_value_slow = [e for e in slow if HIGH_VALUE_PATHS.search(e["url"])]
+
+    # --- Top Server Bottlenecks ---
+    # Volume x Latency: A 5s page visited 2 times is less impactful than a 2s page visited 5000 times.
+    # We calculate the total seconds spent waiting for each URL to identify which pages are tying up PHP workers the most.
+    url_time_wasted = defaultdict(float)
+    url_counts = Counter()
+    for e in entries:
+        if e["rt"] > 0.001:
+            url_time_wasted[e["url"]] += e["rt"]
+            url_counts[e["url"]] += 1
+    
+    top_wasted_urls = []
+    for url, total_time in sorted(url_time_wasted.items(), key=lambda x: -x[1])[:5]:
+        top_wasted_urls.append({
+            "url": url,
+            "total_time_wasted_sec": total_time,
+            "avg_rt": total_time / url_counts[url],
+            "count": url_counts[url]
+        })
+
     # Drill-down: which URLs/IPs are behind each 4xx/5xx status code
     status_urls = defaultdict(Counter)
     status_ips = defaultdict(set)
@@ -514,6 +538,8 @@ def analyze_access_log(logs):
     return {"total": len(lines), "statuses": stc, "avg_rt": avg_rt,
             "slow": slow, "severely_slow": severely_slow, "min_rt": min_rt, "max_rt": max_rt,
             "slowest_pages": slowest_pages,
+            "high_value_slow": high_value_slow,
+            "top_wasted_urls": top_wasted_urls,
             "bot_data": bot_data, "fivexx": fivexx,
             "entries": entries, "hourly": dict(sorted(hourly.items())),
             "query_params": query_params, "status_urls": status_urls,
@@ -559,14 +585,31 @@ def cross_analyze(access_entries, cache_entries, error_entries, ip_counter, scan
         results["slow_cache_misses"] = slow_misses[:3]
 
         miss_by_url = defaultdict(list)
+        miss_query_params = Counter()
         for ce in cache_entries:
-            if ce["status"] == "MISS" and ce["ts"]: miss_by_url[ce["url"]].append(ce["ts"])
+            if ce["status"] == "MISS" and ce["ts"]:
+                miss_by_url[ce["url"]].append(ce["ts"])
+                # Extract query params from MISS URLs
+                m = re.search(r'\?([^ "]+)', ce["url"])
+                if m:
+                    for param in m.group(1).split("&"):
+                        name = param.split("=")[0]
+                        miss_query_params[name] += 1
+
         top_missed = []
         for url, timestamps in sorted(miss_by_url.items(), key=lambda x: -len(x[1]))[:7]:
             tss = sorted(timestamps)
             top_missed.append({"url": url, "count": len(timestamps),
                                "from": tss[0].strftime("%H:%M"), "to": tss[-1].strftime("%H:%M")})
         results["top_missed_urls"] = top_missed
+        
+        # Calculate if specific query params are driving a large % of misses
+        total_misses = sum(len(ts) for ts in miss_by_url.values())
+        results["miss_query_params"] = []
+        if total_misses > 0:
+            for param, count in miss_query_params.most_common(5):
+                if count / total_misses > 0.10: # Only flag if it causes >10% of all misses
+                    results["miss_query_params"].append({"param": param, "count": count, "share": count/total_misses*100})
 
         hit_urls = set(ce["url"] for ce in cache_entries if ce["status"] == "HIT")
         miss_urls_set = set(ce["url"] for ce in cache_entries if ce["status"] == "MISS")
@@ -585,6 +628,35 @@ def cross_analyze(access_entries, cache_entries, error_entries, ip_counter, scan
         results["suspicious_ips"] = suspicious[:5]
 
     results["top_ips"] = Counter(e["ip"] for e in access_entries).most_common(8)
+    
+    # --- Behavioral Cohort Analysis (ASN Aggregation) ---
+    # Group requests by ASN/Org to detect distributed scraper networks
+    # that use many IPs with low individual volume.
+    asn_counts = defaultdict(int)
+    asn_ips = defaultdict(set)
+    for e in access_entries:
+        ip = e["ip"]
+        if ip in ("::1", "127.0.0.1"): continue
+        org, is_hosting = ip_org(ip)
+        if org and org != GEOIP_DISABLED:
+            asn_counts[org] += 1
+            asn_ips[org].add(ip)
+            
+    top_asns = []
+    for org, count in sorted(asn_counts.items(), key=lambda x: -x[1]):
+        ip_count = len(asn_ips[org])
+        # Flag if an ASN has high volume spread across many IPs (distributed)
+        # and is a known hosting provider (not a residential ISP like Comcast)
+        _, is_hosting = ip_org(next(iter(asn_ips[org]))) # Check the first IP to see if the org is hosting
+        if count >= 50 and ip_count >= 5 and is_hosting:
+            top_asns.append({
+                "org": org,
+                "total_requests": count,
+                "unique_ips": ip_count,
+                "avg_requests_per_ip": count / ip_count
+            })
+    results["top_asns"] = top_asns[:5]
+
     results["scanner_ips"] = scanner_ips.most_common(5)
     return results
 
@@ -1586,6 +1658,27 @@ def main():
         llm_instructions.append(
             "RULE (5xx Errors): You found 5xx errors. Check if they correlate with high traffic spikes or specific slow pages. "
             "Recommend checking PHP worker limits in MyKinsta -> Resource Usage."
+        )
+
+    # 4. Business Impact Rules
+    if access_data and access_data.get("high_value_slow"):
+        llm_instructions.append(
+            "RULE (Business Impact): You found slow responses on critical conversion paths (e.g., /checkout, /cart). "
+            "You MUST elevate this to a 🟡 Warning finding, as it directly impacts user experience on high-value pages."
+        )
+
+    if cross_results and cross_results.get("miss_query_params"):
+        params = [p["param"] for p in cross_results["miss_query_params"]]
+        llm_instructions.append(
+            f"RULE (Edge Bypass): Specific query parameters ({', '.join(params)}) are driving a large percentage of cache misses. "
+            "Recommend adding these parameters to the Kinsta Edge Caching ignore list if they do not change page content."
+        )
+
+    if cross_results and cross_results.get("top_asns"):
+        asns = [a["org"] for a in cross_results["top_asns"]]
+        llm_instructions.append(
+            f"RULE (Distributed Scraping): Detected coordinated requests from multiple IPs belonging to specific hosting ASNs ({', '.join(asns)}). "
+            "This is a distributed scraper network. Recommend blocking the ASN via Cloudflare/WAF, not individual IPs."
         )
 
     # Output context.json instead of Markdown

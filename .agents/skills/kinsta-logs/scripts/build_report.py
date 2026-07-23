@@ -50,6 +50,54 @@ def main():
         print("Error: report_skeleton not found in context.json", file=sys.stderr)
         sys.exit(1)
 
+    # --- Inject New Data Tables into Part 2 ---
+    # We inject these right before the "## 🔬 Live Probe Cross-Match" section
+    injection_point = "## 🔬 Live Probe Cross-Match"
+    new_tables = []
+
+    # 1. High Value Slow Paths
+    if context.get("high_value_slow"):
+        new_tables.append("### 🟡 Slow Responses on High-Value Paths")
+        new_tables.append("")
+        new_tables.append("| URL | Response Time | IP | Status |")
+        new_tables.append("|---|---|---|---|")
+        for e in context["high_value_slow"][:5]:
+            new_tables.append(f"| `{e['url']}` | {e['rt']:.3f}s | `{e['ip']}` | {e['status']} |")
+        new_tables.append("")
+
+    # 2. Top Server Bottlenecks
+    if context.get("top_wasted_urls"):
+        new_tables.append("### ⏱️ Top Server Bottlenecks (Volume x Latency)")
+        new_tables.append("")
+        new_tables.append("| URL | Total PHP Worker Time | Avg RT | Requests |")
+        new_tables.append("|---|---|---|---|")
+        for e in context["top_wasted_urls"]:
+            new_tables.append(f"| `{e['url']}` | **{e['total_time_wasted_sec']:.1f}s** | {e['avg_rt']:.3f}s | {e['count']} |")
+        new_tables.append("")
+
+    # 3. Edge Bypass (Query Params)
+    if context.get("cross_results", {}).get("miss_query_params"):
+        new_tables.append("### ⚠️ Edge Cache Bypass (Query Parameters)")
+        new_tables.append("")
+        new_tables.append("| Parameter | Cache MISSes | % of Total MISSes |")
+        new_tables.append("|---|---|---|")
+        for p in context["cross_results"]["miss_query_params"]:
+            new_tables.append(f"| `?{p['param']}=...` | {p['count']} | {p['share']:.1f}% |")
+        new_tables.append("")
+
+    # 4. Distributed Scraping (ASN Aggregation)
+    if context.get("cross_results", {}).get("top_asns"):
+        new_tables.append("### 🕸️ Distributed Scraper Networks (ASN Aggregation)")
+        new_tables.append("")
+        new_tables.append("| ASN / Organization | Total Requests | Unique IPs | Avg Req/IP |")
+        new_tables.append("|---|---|---|---|")
+        for a in context["cross_results"]["top_asns"]:
+            new_tables.append(f"| {a['org']} | **{a['total_requests']}** | {a['unique_ips']} | {a['avg_requests_per_ip']:.1f} |")
+        new_tables.append("")
+
+    if new_tables:
+        report = report.replace(injection_point, "\n".join(new_tables) + "\n" + injection_point)
+
     # Replace markers with findings
     markers = {
         "<!-- LLM:AT_A_GLANCE -->": findings.get("at_a_glance", ""),
