@@ -19,7 +19,7 @@ from pathlib import Path
  
 CREDENTIALS_PATH = Path.home() / ".config" / "kinsta-log-analyzer" / "email.json"
 SKILL_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "email.json"
-DEFAULT_REPORTS_DIR = Path.home() / "Downloads" / "kinsta-logs" / "reports"
+DEFAULT_REPORTS_DIR = Path(os.environ.get("KINSTA_LOG_OUTPUT_DIR", Path.home() / "Downloads" / "kinsta-logs")) / "reports"
  
  
 def load_config():

@@ -132,9 +132,9 @@ The entire data gathering pipeline (site discovery, log fetching, baseline probi
      ".agents/skills/kinsta-logs/references/site-context.md"
    ```
 
-### Step 4: Export PDF & Email (Optional)
+### Step 4: Export PDF & Email
 
-1. **Export PDF:**
+1. **Export PDF (MANDATORY — always run after validation):**
    ```bash
    bash .agents/skills/kinsta-logs/scripts/export_pdf.sh "$REPORT_PATH"
    ```
