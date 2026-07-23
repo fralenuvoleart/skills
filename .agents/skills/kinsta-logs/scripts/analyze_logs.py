@@ -933,7 +933,7 @@ def generate_report(site_name, error_findings, error_meta, access_data,
     L.append("")
     L.append("## 📋 Analyst Commentary & Recommendations")
     L.append("")
-    L.append("### Overall Assessment")
+    L.append("### 📊 Overall Assessment")
     L.append("")
     L.append("<!-- LLM:OVERALL_ASSESSMENT -->")
     L.append("")
@@ -946,27 +946,27 @@ def generate_report(site_name, error_findings, error_meta, access_data,
     for _line in convergent_lines:
         L.append(_line)
         L.append("")
-    L.append("### Attack/Security Findings")
+    L.append("### 🛡️ Attack/Security Findings")
     L.append("")
     L.append("<!-- LLM:ATTACK_SECURITY -->")
     L.append("")
-    L.append("### Cache Root Cause Analysis")
+    L.append("### 🗄️ Cache Root Cause Analysis")
     L.append("")
     L.append("<!-- LLM:CACHE_ROOT_CAUSE -->")
     L.append("")
-    L.append("### Bot Traffic Strategy")
+    L.append("### 🤖 Bot Traffic Strategy")
     L.append("")
     L.append("<!-- LLM:BOT_STRATEGY -->")
     L.append("")
-    L.append("### Concentrated Traffic Spikes & Bursts")
+    L.append("### 📈 Concentrated Traffic Spikes ### Concentrated Traffic Spikes & Bursts Bursts")
     L.append("")
     L.append("<!-- LLM:BURST_CARDS -->")
     L.append("")
-    L.append("### Traffic Anomalies")
+    L.append("### 📉 Traffic Anomalies")
     L.append("")
     L.append("<!-- LLM:TRAFFIC_ANOMALIES -->")
     L.append("")
-    L.append("### 404 Errors Recommendations")
+    L.append("### 🔗 404 Errors Recommendations")
     L.append("")
     L.append("<!-- LLM:ERROR_FIXES -->")
     L.append("")
@@ -1479,8 +1479,8 @@ FORBIDDEN_SECTIONS = [
 ]
 
 CARD_SECTIONS_REQUIRING_INCIDENT_BULLET = [
-    "### Attack/Security Findings", "### Concentrated Traffic Spikes & Bursts",
-    "### Traffic Anomalies",
+    "### 🛡️ Attack/Security Findings", "### 📈 Concentrated Traffic Spikes ### Concentrated Traffic Spikes & Bursts Bursts",
+    "### 📉 Traffic Anomalies",
 ]
 
 def validate_report(path):

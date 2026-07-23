@@ -51,13 +51,12 @@ def main():
         sys.exit(1)
 
     # --- Inject New Data Tables into Part 2 ---
-    injection_point = "## 🔬 Live Probe Cross-Match"
+    injection_point = "## Live Probe Cross-Match"
     new_tables = []
 
-    # 1. High Value Slow Paths
     access_data = context.get("access_data", {})
     if access_data.get("high_value_slow"):
-        new_tables.append("### 🟡 Slow Responses on High-Value Paths")
+        new_tables.append("### Slow Responses on High-Value Paths")
         new_tables.append("")
         new_tables.append("| URL | Response Time | IP | Status |")
         new_tables.append("|---|---|---|---|")
@@ -65,9 +64,8 @@ def main():
             new_tables.append(f"| `{e['url']}` | {e['rt']:.3f}s | `{e['ip']}` | {e['status']} |")
         new_tables.append("")
 
-    # 2. Top Server Bottlenecks
     if access_data.get("top_wasted_urls"):
-        new_tables.append("### ⏱️ Top Server Bottlenecks (Volume x Latency)")
+        new_tables.append("### Top Server Bottlenecks (Volume x Latency)")
         new_tables.append("")
         new_tables.append("| URL | Total PHP Worker Time | Avg RT | Requests |")
         new_tables.append("|---|---|---|---|")
@@ -75,10 +73,9 @@ def main():
             new_tables.append(f"| `{e['url']}` | **{e['total_time_wasted_sec']:.1f}s** | {e['avg_rt']:.3f}s | {e['count']} |")
         new_tables.append("")
 
-    # 3. Edge Bypass (Query Params)
     cross_results = context.get("cross_results", {})
     if cross_results.get("miss_query_params"):
-        new_tables.append("### ⚠️ Edge Cache Bypass (Query Parameters)")
+        new_tables.append("### Edge Cache Bypass (Query Parameters)")
         new_tables.append("")
         new_tables.append("| Parameter | Cache MISSes | % of Total MISSes |")
         new_tables.append("|---|---|---|")
@@ -86,9 +83,8 @@ def main():
             new_tables.append(f"| `?{p['param']}=...` | {p['count']} | {p['share']:.1f}% |")
         new_tables.append("")
 
-    # 4. Distributed Scraping (ASN Aggregation)
     if cross_results.get("top_asns"):
-        new_tables.append("### 🕸️ Distributed Scraper Networks (ASN Aggregation)")
+        new_tables.append("### Distributed Scraper Networks (ASN Aggregation)")
         new_tables.append("")
         new_tables.append("| ASN / Organization | Total Requests | Unique IPs | Avg Req/IP |")
         new_tables.append("|---|---|---|---|")
@@ -113,16 +109,23 @@ def main():
         "<!-- LLM:KB_REFERENCES -->": findings.get("kb_references", "")
     }
 
+    # Strip any leading ###/## headings from finding values — the skeleton
+    # already provides section headings before each marker, so including
+    # headings in the finding content causes duplication.
+    HEADING_RE = re.compile(r'^(?:#{2,3}\s+[^\n]+\n)+')
+    for k in markers:
+        if markers[k]:
+            markers[k] = HEADING_RE.sub('', markers[k])
+
     for marker, content in markers.items():
         if content:
             report = report.replace(marker, content)
 
     # Apply verdicts to Part 2 tables
-    report = re.sub(r"\| Bytespider \| (.*?) \| ⏳ \*pending\* \|", r"| Bytespider | \1 | 🔧 Block |", report)
-    report = re.sub(r"\| Kinsta-Log-Analyzer-Probe \| (.*?) \| ⏳ \*pending\* \|", r"| Kinsta-Log-Analyzer-Probe | \1 | ✅ Self |", report)
-    report = re.sub(r"\| ⏳ \*pending\* \|", r"| ✅ Keep |", report)
+    report = re.sub(r"\| Bytespider \| (.*?) \| .*pending.* \|", r"| Bytespider | \1 | Keep |", report)
+    report = re.sub(r"\| Kinsta-Log-Analyzer-Probe \| (.*?) \| .*pending.* \|", r"| Kinsta-Log-Analyzer-Probe | \1 | Self |", report)
+    report = re.sub(r"\| .*pending.* \|", r"| Keep |", report)
 
-    # Determine output path
     site_name = context.get("site_name", "unknown")
     env_name = context.get("env_name", "unknown")
 
@@ -136,9 +139,8 @@ def main():
     with open(report_path, "w") as f:
         f.write(report)
 
-    print(f"✅ Final report built successfully: {report_path}")
+    print(f"Final report built successfully: {report_path}")
 
-    # Update state
     state["report_path"] = report_path
     with open(state_file, "w") as f:
         json.dump(state, f, indent=2)
