@@ -8,13 +8,12 @@ Chronological log of actions already taken via Kinsta support for each site. Con
 
 ## pbservices.ge (Live)
 
-### 2026-07-17 — Server Cache TTL Test: 24h → 7 Days (Francesco, self)
+### 2026-07-23 — Server Cache TTL Test: 24h → 7 Days — CONCLUDED (Francesco, self)
 
 **Action category: Cache configuration**
-- Testing change of Kinsta server cache TTL from the default **24 hours** to **7 days** (604,800 seconds)
-- Purpose: observe whether extended cache retention improves HIT rate and reduces origin load
-- Cache-perf log analysis on subsequent runs should be evaluated against this new TTL, noting that a higher TTL means MISSes and BYPASSes are more significant (stale cache persists longer), while HITs are "cheaper" (fewer regenerations)
-- ⚠️ This is a test — effectiveness and any adverse effects (stale content, disk usage) should be reassessed after a full week of traffic under the new TTL
+- Tested change of Kinsta server cache TTL from the default **24 hours** to **7 days** (604,800 seconds) from 2026-07-17 to 2026-07-23
+- **Result: No observable improvement or degradation.** Cache HIT rate, MISS/BYPASS patterns, and origin load showed no meaningful difference between the 24h and 7-day TTL settings. No adverse effects (stale content, disk usage) were observed.
+- **Status: Reverted to default 24h TTL.** Future analyses should use the default Kinsta cache TTL assumptions — the 7-day TTL is no longer in effect.
 
 ### 2026-07-16 — Full Denied IPs Audit (Francesco, self)
 
