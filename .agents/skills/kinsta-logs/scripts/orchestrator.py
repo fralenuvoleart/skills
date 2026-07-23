@@ -46,7 +46,9 @@ def main():
         # Handle JSON-RPC response structure
         if "result" in sites_data and "content" in sites_data["result"]:
             try:
-                sites_list = json.loads(sites_data["result"]["content"][0]["text"])
+                raw = json.loads(sites_data["result"]["content"][0]["text"])
+                # API wraps sites in {"company": {"sites": [...]}}
+                sites_list = raw.get("company", {}).get("sites", [])
             except (json.JSONDecodeError, KeyError, IndexError):
                 sites_list = []
         else:
@@ -79,8 +81,8 @@ def main():
 
     # 3. Setup Output Directory
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
-    # Use workspace-relative output path
-    output_dir = os.path.join(".output", "kinsta-logs", site_name, args.env)
+    base = os.environ.get("KINSTA_LOG_OUTPUT_DIR", os.path.join(os.path.expanduser("~"), "Downloads", "kinsta-logs"))
+    output_dir = os.path.join(base, site_name, args.env)
     os.makedirs(output_dir, exist_ok=True)
 
     # 4. Fetch Logs

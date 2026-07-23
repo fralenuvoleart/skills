@@ -91,7 +91,7 @@ The entire data gathering pipeline (site discovery, log fetching, baseline probi
    - See `references/report-structure.md` for the Internal Framework (Analyst Checklist). Use this framework to REASON through each finding (What / Why / Who / How).
 
 4. **Write Findings to JSON:**
-   Create a file named `analyst_findings.json` in the workspace root. It MUST contain the following keys, corresponding to the report sections. Use the **finding-card format** (Markdown) for the values, adhering strictly to the Tone Calibration and Severity Icon vocabulary in `references/conciseness-directives.md`.
+    Create a file named `{timestamp}_analyst_findings.json` in the run directory (alongside `context.json`, e.g. `.output/kinsta-logs/{site}/{env}/{timestamp}_analyst_findings.json`). It MUST contain the following keys, corresponding to the report sections. Use the **finding-card format** (Markdown) for the values, adhering strictly to the Tone Calibration and Severity Icon vocabulary in `references/conciseness-directives.md`.
 
    ```json
    {
@@ -112,10 +112,10 @@ The entire data gathering pipeline (site discovery, log fetching, baseline probi
 ### Step 3: Build & Validate Report
 
 1. **Build the final Markdown report:**
-   ```bash
-   python3 .agents/skills/kinsta-logs/scripts/build_report.py --findings analyst_findings.json
-   ```
-   *Note: This script merges your JSON findings with the raw data tables in `context.json` to produce the final, perfectly formatted Markdown report in `.output/kinsta-logs/reports/`.*
+    ```bash
+    python3 .agents/skills/kinsta-logs/scripts/build_report.py --findings "$RUN_DIR/{timestamp}_analyst_findings.json"
+    ```
+    *Note: This script merges your JSON findings with the raw data tables in `context.json` to produce the final, perfectly formatted Markdown report in `~/Downloads/kinsta-logs/reports/`.*
 
 2. **Validate the report:**
    ```bash
@@ -202,7 +202,7 @@ and `typst` (Quarto pandoc+Typst, no extra deps). Switch with `--engine`.
 
 ## Output Structure
 ```
-.output/kinsta-logs/
+~/Downloads/kinsta-logs/ (configurable via KINSTA_LOG_OUTPUT_DIR env var)
 ├── {site_name}/
 │   └── {env_name}/
 │       ├── {YYYY-MM-DD_HHMMSS}_error.json
@@ -210,7 +210,8 @@ and `typst` (Quarto pandoc+Typst, no extra deps). Switch with `--engine`.
 │       ├── {YYYY-MM-DD_HHMMSS}_cache.json
 │       ├── {YYYY-MM-DD_HHMMSS}_probe_baseline.json
 │       ├── {YYYY-MM-DD_HHMMSS}_probe_targeted.json
-│       └── context.json
+│       ├── {YYYY-MM-DD_HHMMSS}_analyst_findings.json
+│       └── {YYYY-MM-DD_HHMMSS}_context.json
 └── reports/
     ├── report_{site_name}_{env_name}_{YYYYMMDDHHMM}.md
     └── report_{site_name}_{env_name}_{YYYYMMDDHHMM}.pdf

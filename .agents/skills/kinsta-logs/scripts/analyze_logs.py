@@ -632,11 +632,17 @@ def cross_analyze(access_entries, cache_entries, error_entries, ip_counter, scan
     # --- Behavioral Cohort Analysis (ASN Aggregation) ---
     # Group requests by ASN/Org to detect distributed scraper networks
     # that use many IPs with low individual volume.
+    # Only lookup IPs with >= 10 requests to avoid drowning in single-request IPs
+    # (each ip_org() is a live ipinfo.io API call — 2,300+ unique IPs × 3 calls/IP
+    # = ~7,000 API calls, which can take 30+ minutes). At >= 10 threshold: 54 IPs.
+    ip_counts = Counter(e["ip"] for e in access_entries)
+    significant_ips = {ip for ip, cnt in ip_counts.items() if cnt >= 10}
     asn_counts = defaultdict(int)
     asn_ips = defaultdict(set)
     for e in access_entries:
         ip = e["ip"]
         if ip in ("::1", "127.0.0.1"): continue
+        if ip not in significant_ips: continue
         org, is_hosting = ip_org(ip)
         if org and org != GEOIP_DISABLED:
             asn_counts[org] += 1
@@ -1699,7 +1705,8 @@ def main():
 
     # Output to workspace-relative path
     output_dir = os.path.dirname(args.error_file)
-    context_path = os.path.join(output_dir, "context.json")
+    ts_val = os.path.basename(args.error_file).split("_error.json")[0]
+    context_path = os.path.join(output_dir, f"{ts_val}_context.json")
     
     # We need to handle datetime objects in the dict before json serialization
     def default_serializer(obj):

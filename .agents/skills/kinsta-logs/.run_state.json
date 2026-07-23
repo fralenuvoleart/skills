@@ -1,0 +1,12 @@
+{
+  "env_id": "c80108e0-0999-42e8-93a9-eb6f1945f691",
+  "dir": ".output/kinsta-logs/pbservices.ge/live",
+  "timestamp": "2026-07-23_063845",
+  "error_log": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_error.json",
+  "access_log": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_access.json",
+  "cache_log": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_cache.json",
+  "probe_baseline": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_probe_baseline.json",
+  "context_path": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_context.json",
+  "probe_targeted": ".output/kinsta-logs/pbservices.ge/live/2026-07-23_063845_probe_targeted.json",
+  "report_path": ".output/kinsta-logs/reports/report_pbservices.ge_live_202607231458.md"
+}
