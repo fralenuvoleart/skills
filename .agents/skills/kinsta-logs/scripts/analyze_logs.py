@@ -306,6 +306,10 @@ BOT_CATEGORIES = {
     # burst anomaly (one IP hitting many pages in a short window looks exactly like the
     # Concentrated Traffic Spikes & Bursts pattern this script otherwise looks for).
     "Kinsta-Log-Analyzer-Probe": "🔧 Internal Tooling (Self)",
+    # Sevalla-hosted cache-warmer (Automations (Telegram/Warmer)) — self-identified
+    # via a distinctive User-Agent so it's never mistaken for a scraper despite its
+    # Google Cloud IPs resolving to *.bc.googleusercontent.com.
+    "SevallaCacheWarmer": "🔧 Internal Tooling (Self)",
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -500,6 +504,7 @@ def analyze_access_log(logs):
         ("PerplexityBot", r"PerplexityBot"), ("Google-Extended", r"Google-Extended"),
         ("Bytespider", r"Bytespider"), ("Anthropic-ai", r"anthropic-ai"),
         ("Kinsta-Log-Analyzer-Probe", r"Kinsta-Log-Analyzer-Probe"),
+        ("SevallaCacheWarmer", r"SevallaCacheWarmer"),
     ]
     bot_data = {}
     for name, pat in bot_patterns:
@@ -845,7 +850,7 @@ def generate_report(site_name, error_findings, error_meta, access_data,
                 # fixed baseline URL list), not a real site-traffic finding. Citing "100%
                 # of our own probe's requests hit X" as a prioritization reason would be
                 # nonsensical in the finished report.
-                if b.get("top_urls") and name != "Kinsta-Log-Analyzer-Probe":
+                if b.get("top_urls") and name not in ("Kinsta-Log-Analyzer-Probe", "SevallaCacheWarmer"):
                     burst_target_urls.append((top_url, share, f"{share:.0f}% of {name}'s traffic via one IP"))
     for ip, cnt in cross_results.get("scanner_ips", []):
         burst_rows.append({

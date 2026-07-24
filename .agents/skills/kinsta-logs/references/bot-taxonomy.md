@@ -149,6 +149,17 @@ it's a straightforward value calculation.
 
 ---
 
+## Internal Tooling (Self)
+
+Bots in this category are part of the site's own operational infrastructure — never block or throttle them.
+
+| Bot | Operator | What it actually does | Recommendation |
+|---|---|---|---|
+| **SevallaCacheWarmer** | This site (Sevalla-hosted) | Cache-warmer (`Automations (Telegram/Warmer)` app, Sevalla ID `73d65fa7`) that systematically visits all pages across all languages to keep the Kinsta server cache populated. Runs on Google Cloud via Sevalla — its IPs naturally resolve to `*.bc.googleusercontent.com` (GCP customer VMs) and would otherwise look like scrapers. Self-identified via User-Agent `SevallaCacheWarmer/1.0 (+https://pbservices.ge; token:cache-warmer)`. | Always keep — blocking breaks cache-warming. `analyze_logs.py` auto-classifies it as `Internal Tooling (Self)` via its User-Agent, bypassing the IP/ASN-based scraper detection that would otherwise flag GCP VM traffic. |
+| **Kinsta-Log-Analyzer-Probe** | This skill | Live HTTP probe (`probe_urls.py`) that verifies URLs during report generation. Self-identified via User-Agent. | Always keep — this is the report's own verification traffic. Excluded from all findings. |
+
+---
+
 ## Regional / High-Volume Crawlers (assessed without bias)
 
 These are the bots most often flagged for blocking. Each one gets the **same three-question

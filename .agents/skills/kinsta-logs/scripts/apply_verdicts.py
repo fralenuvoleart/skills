@@ -36,6 +36,7 @@ def main():
     # Apply specific verdicts first
     content = re.sub(r"\| Bytespider \| (.*?) \| ⏳ \*pending\* \|", r"| Bytespider | \1 | 🔧 Block |", content)
     content = re.sub(r"\| Kinsta-Log-Analyzer-Probe \| (.*?) \| ⏳ \*pending\* \|", r"| Kinsta-Log-Analyzer-Probe | \1 | ✅ Self |", content)
+    content = re.sub(r"\| SevallaCacheWarmer \| (.*?) \| ⏳ \*pending\* \|", r"| SevallaCacheWarmer | \1 | ✅ Self |", content)
     
     # Apply catch-all fallback
     content = re.sub(r"\| ⏳ \*pending\* \|", r"| ✅ Keep |", content)

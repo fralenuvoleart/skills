@@ -124,6 +124,7 @@ def main():
     # Apply verdicts to Part 2 tables
     report = re.sub(r"\| Bytespider \|", r"| Bytespider |", report)
     report = re.sub(r"\| Kinsta-Log-Analyzer-Probe \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| .*pending.* \|", r"| Kinsta-Log-Analyzer-Probe | \1 | \2 | \3 | \4 | Self |", report)
+    report = re.sub(r"\| SevallaCacheWarmer \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| .*pending.* \|", r"| SevallaCacheWarmer | \1 | \2 | \3 | \4 | Self |", report)
     report = re.sub(r"\|[^|]*pending[^|]*\|", r"| Keep |", report)
 
     site_name = context.get("site_name", "unknown")

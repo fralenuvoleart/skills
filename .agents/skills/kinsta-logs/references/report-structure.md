@@ -16,9 +16,9 @@ LLM orders sections within Part 1 by severity: 🔴 > 🟡 > 🔧 > ✅. Within 
 - **Source:** LLM (written last, after the Correlation & Synthesis Pass — it summarizes findings not yet derived until then)
 - **Format:**
   - One-line overall status with severity icon
-  - `### Anomalies found in this period` — bullet list, one per finding, severity icon per line, plain language
+  - `### Findings for this period` — bullet list, one per finding, severity icon per line, plain language. "Findings" covers both anomalous (🟡/🔴) and informational (ℹ️) items without implying every bullet is a problem.
   - `### Priority actions this period` — numbered list, ordered by urgency, concrete and actionable
-- **If empty:** "✅ No anomalies detected in this period. No actions required."
+- **If empty:** "✅ No findings in this period. No actions required."
 
 ### `## 📋 Analyst Commentary & Recommendations`
 
