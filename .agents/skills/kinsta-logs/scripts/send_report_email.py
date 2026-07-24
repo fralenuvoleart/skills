@@ -9,6 +9,7 @@ live with the skill for portability.
 """
  
 import json
+import os
 import smtplib
 import sys
 from email import encoders

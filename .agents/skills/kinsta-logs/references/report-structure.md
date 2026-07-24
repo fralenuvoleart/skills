@@ -47,7 +47,7 @@ Contains all analyst-written subsections below. LLM fills each via its marker.
 
 #### `### Bot Traffic Strategy`
 - **Marker:** `<!-- LLM:BOT_STRATEGY -->`
-- **Format:** Table: Bot | Requests | % of bot traffic | Verdict | Evidence. Plus Totals row. Bot verdicts: Keep / Block / Monitor / Throttle. Evidence column cites actual numbers/behavior from auto-gen bot tables, never references `bot-taxonomy.md` directly. **Per SKILL.md's Conciseness & Consistency Directive 2: if >70% of bots resolve to the same verdict, collapse them into one summary row** (`"✅ Keep (N bots, no action — see Part 2 for the full list)"`) **and itemize only the outliers.** This collapsing rule applies to THIS table only — the auto-generated per-category bot tables in Part 2 remain full, uncollapsed evidence appendices.
+- **Format:** Table: Bot | Requests | % of bot traffic | Verdict | Evidence. Followed by a blank line, then a blockquote summary callout interpreting the table (table → blank line → blockquote order — consistent with the Top Visitor IPs section). Bot verdicts: Keep / Block / Monitor / Throttle. Evidence column cites actual numbers/behavior from auto-gen bot tables, never references `bot-taxonomy.md` directly. **Per Conciseness & Consistency Directive 2: if >70% of bots resolve to the same verdict, collapse them into one summary row** (`"✅ Keep (N bots, no action — see Part 2 for the full list)"`) **and itemize only the outliers.** This collapsing rule applies to THIS table only — the auto-generated per-category bot tables in Part 2 remain full, uncollapsed evidence appendices.
 - **If empty:** "✅ No bot traffic detected in this window."
 
 #### `### Concentrated Traffic Spikes & Bursts`

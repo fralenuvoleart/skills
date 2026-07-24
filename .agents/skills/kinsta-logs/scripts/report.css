@@ -48,6 +48,7 @@ th, td {
   text-align: left;
   vertical-align: top;
   overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Cap the last (usually widest) column so narrow columns like Verdict/Status keep their width */

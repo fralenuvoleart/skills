@@ -1013,19 +1013,23 @@ def generate_report(site_name, error_findings, error_meta, access_data,
         if access_data.get("slowest_pages"):
             L.append("**Slowest individual requests observed:**")
             L.append("")
-            L.append("| URL | Response Time | IP | Country | Status | Reverse DNS |")
-            L.append("|---|---|---|---|---|---|")
+            L.append("| URL | Response Time | IP | Country | Status | Reverse DNS | ⚠️ |")
+            L.append("|---|---|---|---|---|---|---|")
             slow_ip_set = set()
+            any_customer_vm_in_table = False
             for e in access_data["slowest_pages"][:8]:
                 # Reverse-DNS here specifically, not just ASN/org — "org = Google LLC" does not
                 # tell you whether this is Google's own crawler or an unrelated third party's
                 # customer VM merely rented from Google Cloud. A hostname ending in
                 # googleusercontent.com/compute.amazonaws.com is the actual tell; ASN alone is not.
                 hostname, is_customer_vm = ip_hostname(e["ip"])
+                if is_customer_vm:
+                    any_customer_vm_in_table = True
                 if hostname:
-                    host_display = f"`{hostname}`" + (" ⚠️ cloud customer VM, not the vendor's own service" if is_customer_vm else "")
+                    host_display = f"`{hostname}`"
                 else:
                     host_display = "*no PTR record*"
+                flag_cell = "⚠️" if is_customer_vm else ""
                 cc, flag = ip_country(e["ip"])
                 if cc == GEOIP_DISABLED:
                     country_display = "*geo-IP disabled*"
@@ -1034,8 +1038,19 @@ def generate_report(site_name, error_findings, error_meta, access_data,
                 else:
                     country_display = "*unknown*"
                 slow_ip_set.add(e["ip"])
-                L.append(f"| `{e['url']}` | {e['rt']:.3f}s | `{e['ip']}` | {country_display} | {e['status']} | {host_display} |")
+                L.append(f"| `{e['url']}` | {e['rt']:.3f}s | `{e['ip']}` | {country_display} | {e['status']} | {host_display} | {flag_cell} |")
             L.append("")
+            # Infrastructure warning blockquote — duplicated here (same text as under
+            # Top Visitor IPs) because this table appears first in Part 2 and its ⚠️ suffix
+            # has no visible explanation until the reader reaches Top Visitor IPs several
+            # pages later. Following the established table → blank line → blockquote pattern.
+            if any_customer_vm_in_table:
+                L.append("> ⚠️ **At least one Reverse DNS hostname flagged above is infrastructure, not a residential visitor**")
+                L.append(">")
+                L.append("> - The country tag shows where that server/proxy is located — not where a human visitor actually is.")
+                L.append("> - An ASN like *\"Google LLC\"* alone does **not** confirm it's Google's own crawler.")
+                L.append("> - A `*usercontent.com`/`*.amazonaws.com`-style hostname means it's a **customer's rented VM**, not the vendor itself.")
+                L.append("")
             if len(slow_ip_set) == 1 and len(access_data["slowest_pages"][:8]) >= 3:
                 only_ip = next(iter(slow_ip_set))
                 L.append(f"> ⚠️ **All of the above come from a single IP (`{only_ip}`)** — this is one "
@@ -1428,17 +1443,17 @@ def generate_report(site_name, error_findings, error_meta, access_data,
             # A vertical table with an actual length-proportional bar AND the exact count
             # alongside it removes any ambiguity — the reader never has to eyeball a glyph.
             hour_keys = [f"{h:02d}:00" for h in range(24)]
+            peak_hour, peak_cnt = max(hourly.items(), key=lambda x: x[1])
+            low_hour, low_cnt = min(hourly.items(), key=lambda x: x[1])
+            L.append(f"**Busiest:** `{peak_hour}` UTC ({peak_cnt} requests) · "
+                     f"**Quietest:** `{low_hour}` UTC ({low_cnt} requests)")
+            L.append("")
             L.append("| Hour (UTC) | Requests | |")
             L.append("|---|---|---|")
             for key in hour_keys:
                 cnt = hourly.get(key, 0)
                 bar = bar_chart(cnt, max_h, 20)
                 L.append(f"| `{key}` | {cnt} | {bar} |")
-            L.append("")
-            peak_hour, peak_cnt = max(hourly.items(), key=lambda x: x[1])
-            low_hour, low_cnt = min(hourly.items(), key=lambda x: x[1])
-            L.append(f"**Busiest:** `{peak_hour}` UTC ({peak_cnt} requests) · "
-                     f"**Quietest:** `{low_hour}` UTC ({low_cnt} requests)")
         L.append("")
 
     else:
