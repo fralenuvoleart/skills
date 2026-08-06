@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ site_title }}</title>
+<style>
+  /* SHARED_CSS */
+  /* TEMPLATE_CSS */
+</style>
+</head>
+<body>
+
+  {{^is_weasyprint}}
+  <header class="doc-header">
+    {{#logo}}<img src="{{ logo }}" alt="" class="doc-header-logo">{{/logo}}
+    <span class="doc-header-title">{{ site_title }}</span>
+  </header>
+
+  <footer class="doc-footer">
+    <span class="doc-footer-left">{{ site_title }}</span>
+    <span class="doc-footer-right">Page <span class="page-num"></span></span>
+  </footer>
+
+  <table class="content-table">
+    <thead><tr><td><div class="header-space"></div></td></tr></thead>
+    <tbody><tr><td>
+
+  <table class="content-table">
+    <tbody><tr><td>
+  {{/is_weasyprint}}
+
+      <!-- COVER -->
+      {{#slots.cover}}
+      <section class="cover">
+        <div class="cover-content">
+          <h1>{{ heading }}</h1>
+          <p class="cover-subheading">{{ subheading }}</p>
+          {{#image}}<img src="{{ image }}" alt="" class="cover-image">{{/image}}
+        </div>
+      </section>
+      {{/slots.cover}}
+
+      <!-- HERO -->
+      {{#slots.hero}}
+      <section class="hero">
+        <h1>{{ heading }}</h1>
+        <p>{{ subheading }}</p>
+        {{#image}}<img src="{{ image }}" alt="" class="hero-image">{{/image}}
+      </section>
+      {{/slots.hero}}
+
+      <!-- ABOUT -->
+      {{#slots.about}}
+      <section class="section">
+        <h2>{{ heading }}</h2>
+        <div class="body-text">{{{ body }}}</div>
+      </section>
+      {{/slots.about}}
+
+      <!-- FEATURES -->
+      {{#slots.features}}
+      <section class="section section-alt">
+        <h2>{{ heading }}</h2>
+        <div class="feature-grid">
+          {{#items}}
+          <div class="feature-card">
+            {{#icon}}<img src="{{ icon }}" alt="">{{/icon}}
+            <h3>{{ title }}</h3>
+            <p>{{ description }}</p>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.features}}
+
+      <!-- BENEFITS -->
+      {{#slots.benefits}}
+      <section class="section section-alt">
+        <h2>{{ heading }}</h2>
+        <div class="benefit-list">
+          {{#items}}
+          <div class="benefit-card">
+            {{#icon}}<img src="{{ icon }}" alt="" class="benefit-icon">{{/icon}}
+            <div class="benefit-content">
+              <h3>{{ title }}</h3>
+              <p>{{ description }}</p>
+            </div>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.benefits}}
+
+      <!-- STEPS -->
+      {{#slots.steps}}
+      <section class="section">
+        <h2>{{ heading }}</h2>
+        <div class="steps-list">
+          {{#items}}
+          <div class="step-card">
+            <div class="step-number">{{ step_number }}</div>
+            <div class="step-content">
+              <h3>{{ title }}</h3>
+              <p>{{ description }}</p>
+            </div>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.steps}}
+
+      <!-- HOW-TO -->
+      {{#slots.how-to}}
+      <section class="section section-alt">
+        <h2>{{ heading }}</h2>
+        <div class="howto-list">
+          {{#items}}
+          <div class="howto-card">
+            {{#image}}<img src="{{ image }}" alt="" class="howto-image">{{/image}}
+            <div class="howto-content">
+              <h3>{{ title }}</h3>
+              <p>{{ description }}</p>
+            </div>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.how-to}}
+
+      <!-- FAQ -->
+      {{#slots.faq}}
+      <section class="section">
+        <h2>{{ heading }}</h2>
+        <div class="faq-list">
+          {{#items}}
+          <div class="faq-card">
+            <h3 class="faq-question">{{ question }}</h3>
+            <div class="faq-answer">{{{ answer }}}</div>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.faq}}
+
+      <!-- STATS -->
+      {{#slots.stats}}
+      <section class="section">
+        <div class="stats-bar">
+          {{#items}}
+          <div class="stat">
+            <div class="stat-value">{{ value }}</div>
+            <div class="stat-label">{{ label }}</div>
+          </div>
+          {{/items}}
+        </div>
+      </section>
+      {{/slots.stats}}
+
+      <!-- TESTIMONIALS -->
+      {{#slots.testimonials}}
+      <section class="section section-alt">
+        <h2>{{ heading }}</h2>
+        {{#items}}
+        <div class="testimonial-card">
+          <p class="quote">"{{ quote }}"</p>
+          <p class="author">{{ author }}</p>
+          {{#role}}<p class="role">{{ role }}</p>{{/role}}
+        </div>
+        {{/items}}
+      </section>
+      {{/slots.testimonials}}
+
+      <!-- CTA -->
+      {{#slots.cta}}
+      <section class="cta">
+        <h2>{{ heading }}</h2>
+        <p>{{ body }}</p>
+        <a href="{{ button_url }}" class="button">{{ button_text }}</a>
+      </section>
+      {{/slots.cta}}
+
+      <!-- CONTACT -->
+      {{#slots.contact}}
+      <section class="section">
+        <h2>Contact</h2>
+        <div class="contact-info">
+          {{#email}}<p>&#x1f4e7; {{ email }}</p>{{/email}}
+          {{#phone}}<p>&#x1f4de; {{ phone }}</p>{{/phone}}
+          {{#address}}<p>&#x1f4cd; {{ address }}</p>{{/address}}
+        </div>
+      </section>
+      {{/slots.contact}}
+
+  {{^is_weasyprint}}
+    </td></tr></tbody>
+  </table>
+
+    </td></tr></tbody>
+    <tfoot><tr><td><div class="footer-space"></div></td></tr></tfoot>
+  </table>
+  {{/is_weasyprint}}
+
+</body>
+</html>

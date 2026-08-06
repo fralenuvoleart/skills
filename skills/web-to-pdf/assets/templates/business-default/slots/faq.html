@@ -1,0 +1,13 @@
+<!-- Sub-template for slot: faq
+     Fields: heading (string), items[] (each: question, answer) -->
+<section class="section">
+  <h2>{{ heading }}</h2>
+  <div class="faq-list">
+    {{#items}}
+    <div class="faq-card">
+      <h3 class="faq-question">{{ question }}</h3>
+      <div class="faq-answer">{{{ answer }}}</div>
+    </div>
+    {{/items}}
+  </div>
+</section>

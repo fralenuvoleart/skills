@@ -1,0 +1,16 @@
+<!-- Sub-template for slot: steps
+     Fields: heading (string), items[] (each: step_number, title, description) -->
+<section class="section">
+  <h2>{{ heading }}</h2>
+  <div class="steps-list">
+    {{#items}}
+    <div class="step-card">
+      <div class="step-number">{{ step_number }}</div>
+      <div class="step-content">
+        <h3>{{ title }}</h3>
+        <p>{{ description }}</p>
+      </div>
+    </div>
+    {{/items}}
+  </div>
+</section>

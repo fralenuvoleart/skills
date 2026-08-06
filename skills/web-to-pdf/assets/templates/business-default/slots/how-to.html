@@ -1,0 +1,16 @@
+<!-- Sub-template for slot: how-to
+     Fields: heading (string), items[] (each: title, description, image) -->
+<section class="section section-alt">
+  <h2>{{ heading }}</h2>
+  <div class="howto-list">
+    {{#items}}
+    <div class="howto-card">
+      {{#image}}<img src="{{ image }}" alt="" class="howto-image">{{/image}}
+      <div class="howto-content">
+        <h3>{{ title }}</h3>
+        <p>{{ description }}</p>
+      </div>
+    </div>
+    {{/items}}
+  </div>
+</section>

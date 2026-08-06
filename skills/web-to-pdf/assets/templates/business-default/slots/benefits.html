@@ -1,0 +1,16 @@
+<!-- Sub-template for slot: benefits
+     Fields: heading (string), items[] (each: icon, title, description) -->
+<section class="section section-alt">
+  <h2>{{ heading }}</h2>
+  <div class="benefit-list">
+    {{#items}}
+    <div class="benefit-card">
+      {{#icon}}<img src="{{ icon }}" alt="" class="benefit-icon">{{/icon}}
+      <div class="benefit-content">
+        <h3>{{ title }}</h3>
+        <p>{{ description }}</p>
+      </div>
+    </div>
+    {{/items}}
+  </div>
+</section>

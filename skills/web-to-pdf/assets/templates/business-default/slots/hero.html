@@ -1,0 +1,7 @@
+<!-- Sub-template for slot: hero
+     Fields: heading (string), subheading (string), image (string|null, __IMG_*__ ID) -->
+<section class="hero">
+  <h1>{{ heading }}</h1>
+  <p>{{ subheading }}</p>
+  {{#image}}<img src="{{ image }}" alt="" class="hero-image">{{/image}}
+</section>

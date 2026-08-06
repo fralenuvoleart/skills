@@ -1,0 +1,14 @@
+<!-- Sub-template for slot: features
+     Fields: heading (string), items[] (each: icon, title, description) -->
+<section class="section section-alt">
+  <h2>{{ heading }}</h2>
+  <div class="feature-grid">
+    {{#items}}
+    <div class="feature-card">
+      {{#icon}}<img src="{{ icon }}" alt="">{{/icon}}
+      <h3>{{ title }}</h3>
+      <p>{{ description }}</p>
+    </div>
+    {{/items}}
+  </div>
+</section>

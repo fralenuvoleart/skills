@@ -1,0 +1,71 @@
+/* shared-weasyprint.css — Base styles for WeasyPrint engine.
+   Uses @page margin boxes with position:running() for header (logo + title).
+   Three top boxes all with same background for full-width header bar. */
+:root {
+  --color-primary: #1a56db;
+  --color-text: #1f2937;
+  --color-muted: #6b7280;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f9fafb;
+  --color-header-bg: #1e293b;
+  --color-header-text: #cbd5e1;
+  --font-sans: 'Helvetica Neue', Arial, sans-serif;
+  --header-height: 0px;
+  --footer-height: 0px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+}
+
+/* Running header element — placed in document flow after cover,
+   picked up by @top-left margin box via element(). */
+.doc-header-run {
+  position: running(docHeader);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px;
+  background: var(--color-header-bg);
+  color: var(--color-header-text);
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.doc-header-logo { height: 22px; width: auto; flex-shrink: 0; }
+
+/* ── Default page ── */
+@page {
+  size: PDF_FORMAT;
+  margin: 44px 24px 44px 24px;
+
+  @top-left { content: element(docHeader); }
+  @top-center { content: ""; background: var(--color-header-bg); }
+  @top-right { content: ""; background: var(--color-header-bg); }
+
+  @bottom-right {
+    content: "Page " counter(page);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--color-text);
+  }
+}
+
+/* ── Cover page: full-bleed ── */
+@page cover {
+  margin: 0;
+  @top-left { content: none; }
+  @top-center { content: none; }
+  @top-right { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* ── Sections ── */
+.section { padding: 40px 0; }
+.section-alt { background: var(--color-bg-alt); padding: 40px 0; }
+.section h2, .section-alt h2 { font-size: 26px; margin-bottom: 20px; color: var(--color-primary); }

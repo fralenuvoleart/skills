@@ -1,0 +1,10 @@
+<!-- Sub-template for slot: cover
+     Fields: heading (string), subheading (string), image (string|null)
+     Renders as full first page with page-break-after. -->
+<section class="cover">
+  <div class="cover-content">
+    <h1>{{ heading }}</h1>
+    <p class="cover-subheading">{{ subheading }}</p>
+    {{#image}}<img src="{{ image }}" alt="" class="cover-image">{{/image}}
+  </div>
+</section>

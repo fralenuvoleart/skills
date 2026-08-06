@@ -1,0 +1,12 @@
+<!-- Sub-template for slot: testimonials
+     Fields: heading (string), items[] (each: quote, author, role) -->
+<section class="section section-alt">
+  <h2>{{ heading }}</h2>
+  {{#items}}
+  <div class="testimonial-card">
+    <p class="quote">"{{ quote }}"</p>
+    <p class="author">{{ author }}</p>
+    {{#role}}<p class="role">{{ role }}</p>{{/role}}
+  </div>
+  {{/items}}
+</section>

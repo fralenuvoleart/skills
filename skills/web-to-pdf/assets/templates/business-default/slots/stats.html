@@ -1,0 +1,12 @@
+<!-- Sub-template for slot: stats
+     Fields: items[] (each: value, label) -->
+<section class="section">
+  <div class="stats-bar">
+    {{#items}}
+    <div class="stat">
+      <div class="stat-value">{{ value }}</div>
+      <div class="stat-label">{{ label }}</div>
+    </div>
+    {{/items}}
+  </div>
+</section>

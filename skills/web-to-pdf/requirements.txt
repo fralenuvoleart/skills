@@ -1,0 +1,4 @@
+requests>=2.25.0
+beautifulsoup4>=4.9.0
+chevron>=0.14.0
+weasyprint>=60.0

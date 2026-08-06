@@ -1,0 +1,61 @@
+/* shared.css — Base styles shared across all templates.
+   Inlined at build time by build_pdf.py before Chromium rendering.
+   
+   Header/footer strategy:
+   - @page margin creates consistent content offset on EVERY page
+   - position:fixed repeats header/footer on every page
+   - Cover page uses height:100vh to fill the entire physical page */
+:root {
+  --color-primary: #1a56db;
+  --color-text: #1f2937;
+  --color-muted: #6b7280;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f9fafb;
+  --color-header-bg: #1e293b;
+  --color-header-text: #cbd5e1;
+  --font-sans: 'Helvetica Neue', Arial, sans-serif;
+  --header-height: 40px;
+  --footer-height: 32px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+}
+.doc-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-height);
+  background: var(--color-header-bg);
+  color: var(--color-header-text);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 48px;
+  font-size: 12px; font-weight: 500;
+  z-index: 100;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.doc-header-logo { height: calc(var(--header-height) - 12px); width: auto; flex-shrink: 0; }
+.doc-header-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-footer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--footer-height);
+  background: var(--color-header-bg);
+  color: var(--color-header-text);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  font-size: 10px;
+  z-index: 100;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.doc-footer-left { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-footer-right { flex-shrink: 0; }
+.header-space { height: var(--header-height); }
+.footer-space { height: var(--footer-height); }
+.content-table { width: 100%; border-collapse: collapse; border: none; }
+.section { padding: 48px 60px; }
+.section-alt { background: var(--color-bg-alt); }
+.section h2 { font-size: 28px; margin-bottom: 24px; color: var(--color-primary); }
+@page { size: PDF_FORMAT; margin: 40px 0 32px 0; }

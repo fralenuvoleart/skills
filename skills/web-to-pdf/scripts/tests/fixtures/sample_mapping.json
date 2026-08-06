@@ -1,0 +1,45 @@
+{
+  "template": "business-default",
+  "slots": {
+    "hero": {
+      "heading": "We Build Amazing Software",
+      "subheading": "Trusted by hundreds of companies worldwide since 2010.",
+      "image": "__IMG_abc123__"
+    },
+    "about": {
+      "heading": "Why Choose Us",
+      "body": "We deliver **exceptional quality** with *unmatched speed*."
+    },
+    "features": {
+      "heading": "Our Services",
+      "items": [
+        {"title": "Web Development", "description": "Full-stack web solutions"},
+        {"title": "Mobile Apps", "description": "iOS and Android development"},
+        {"title": "Cloud Infrastructure", "description": "Scalable cloud architecture"}
+      ]
+    },
+    "testimonials": {
+      "heading": "What Our Clients Say",
+      "items": [
+        {"quote": "Best decision we ever made.", "author": "John", "role": "CEO"}
+      ]
+    },
+    "cta": {
+      "heading": "Ready to Start?",
+      "body": "Contact us today for a free consultation.",
+      "button_text": "Get in Touch",
+      "button_url": "https://example.com/contact"
+    },
+    "stats": {
+      "items": [
+        {"value": "500+", "label": "Projects Delivered"},
+        {"value": "98%", "label": "Client Satisfaction"}
+      ]
+    },
+    "contact": {
+      "email": "hello@example.com",
+      "phone": "+1-555-0123",
+      "address": "123 Main St, San Francisco, CA"
+    }
+  }
+}

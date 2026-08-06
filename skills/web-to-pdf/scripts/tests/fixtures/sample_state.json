@@ -1,0 +1,19 @@
+{
+  "step1": {
+    "url": "https://example.com/services",
+    "template": "business-default",
+    "run_dir": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000",
+    "content_md": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/content.md",
+    "screenshot_png": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/page.png",
+    "images_dir": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/images",
+    "image_map": {
+      "__IMG_abc123__": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/images/abc123.jpg",
+      "__IMG_def456__": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/images/def456.png"
+    },
+    "timestamp": "2026-07-25T12:00:00Z"
+  },
+  "step2": {
+    "analyst_mapping_json": "/tmp/web-to-pdf-test/runs/example.com_20260725_120000/analyst_mapping.json",
+    "timestamp": "2026-07-25T12:05:00Z"
+  }
+}

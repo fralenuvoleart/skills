@@ -1,0 +1,10 @@
+<!-- Sub-template for slot: contact
+     Fields: email (string|null), phone (string|null), address (string|null) -->
+<section class="section">
+  <h2>Contact</h2>
+  <div class="contact-info">
+    {{#email}}<p>&#x1f4e7; {{ email }}</p>{{/email}}
+    {{#phone}}<p>&#x1f4de; {{ phone }}</p>{{/phone}}
+    {{#address}}<p>&#x1f4cd; {{ address }}</p>{{/address}}
+  </div>
+</section>

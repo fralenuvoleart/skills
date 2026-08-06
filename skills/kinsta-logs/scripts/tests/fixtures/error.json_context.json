@@ -1,0 +1,20 @@
+{
+  "site_name": "tests",
+  "env_name": "fixtures",
+  "hours": 24,
+  "error_clusters": [],
+  "error_meta": {
+    "total_lines": 0
+  },
+  "access_data": null,
+  "cache_data": null,
+  "cross_results": {
+    "top_ips": [],
+    "top_asns": [],
+    "scanner_ips": []
+  },
+  "scanner_paths": {},
+  "data_errors": {},
+  "report_skeleton": "# Kinsta Health Report - tests (fixtures)\n\n**27 July 2026, 00:16 UTC** \u00b7 Approx. Last 24 hours<br>**0** requests \u00b7 **0** cache entries \u00b7 **0** error lines\n\n## Time Period\n\n1. **Access log:** Not fetched in this run.\n2. **Error log:** No errors found in this window.\n3. **Cache-perf log:** Not fetched in this run.\n\n> \u2139\ufe0f **Geo-IP/ASN/reverse-DNS lookups were disabled** (`--no-geoip` was passed) \u2014 every Country/ASN/Reverse DNS cell below reads *geo-IP disabled*, not \"unknown\" or a broken lookup. Re-run without `--no-geoip` for that data.\n\n# PART 1: SUMMARY & FINDINGS\n\n## \ud83d\udccc At a Glance\n\n<!-- LLM:AT_A_GLANCE -->\n\n## \ud83d\udccb Analyst Commentary & Recommendations\n\n### \ud83d\udcca Overall Assessment\n\n<!-- LLM:OVERALL_ASSESSMENT -->\n\n### \ud83c\udfaf Convergent Cross-Signals\n\nNo overlap found across the cache-miss, burst, and error-URL lists this run \u2014 the findings below are independent issues, not one root cause in disguise.\n\n### \ud83d\udee1\ufe0f Attack/Security Findings\n\n<!-- LLM:ATTACK_SECURITY -->\n\n### \ud83d\uddc4\ufe0f Cache Root Cause Analysis\n\n<!-- LLM:CACHE_ROOT_CAUSE -->\n\n### \ud83e\udd16 Bot Traffic Strategy\n\n<!-- LLM:BOT_STRATEGY -->\n\n### \ud83d\udcc8 Concentrated Traffic Spikes & Bursts\n\n<!-- LLM:BURST_CARDS -->\n\n### \ud83d\udcc9 Traffic Anomalies\n\n<!-- LLM:TRAFFIC_ANOMALIES -->\n\n### \ud83d\udd17 Error & 404 Recommendations\n\n<!-- LLM:ERROR_FIXES -->\n\n# PART 2: TECHNICAL APPENDIX\n\nPerformance data unavailable.\n\n<!-- BUILDER:ERROR_TABLES -->\n\n## Cache Performance\n\nCache data unavailable (no cache_file provided or empty response).\n\n## Bot & Crawler Traffic\n\nNo bot data.\n\n## Concentrated Traffic Spikes & Bursts\n\nNo single-IP burst detected \u2014 traffic within each bot/category is spread across multiple source IPs, not dominated by one.\n\n## Traffic Overview\n\nAccess log unavailable.\n\n## \ud83d\udd2c Live Probe Cross-Match\n\n<!-- LLM:PROBE_CROSS_MATCH -->\n\n## \ud83d\udcda Kinsta KB References\n\n<!-- LLM:KB_REFERENCES -->\n",
+  "llm_instructions": []
+}

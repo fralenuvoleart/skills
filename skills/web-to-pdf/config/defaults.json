@@ -1,0 +1,20 @@
+{
+  "_comment": "All paths support ~ expansion. Override output_dir via WEB_TO_PDF_OUTPUT_DIR env var.",
+  "default_template": "business-default",
+  "default_engine": "weasyprint",
+  "output_dir": "~/Downloads/web-to-pdf",
+  "chromium_bin": "/usr/bin/chromium",
+  "screenshot_width": 1280,
+  "screenshot_full_page": true,
+  "pdf_format": "A4",
+  "pdf_print_background": true,
+  "cleanup_after_build": true,
+  "validation": {
+    "min_content_chars": 50,
+    "min_screenshot_bytes": 10240,
+    "min_pdf_bytes": 1024,
+    "max_pdf_bytes": 52428800,
+    "min_pages": 1,
+    "max_pages": 20
+  }
+}

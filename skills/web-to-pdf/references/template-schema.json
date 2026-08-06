@@ -1,0 +1,137 @@
+{
+  "_comment": "Machine-parseable template slot schemas. Add new templates here. build_pdf.py reads this to validate required slots.",
+  "templates": {
+    "business-default": {
+      "slots": {
+        "cover": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "subheading": "string",
+            "image": "string|null"
+          }
+        },
+        "hero": {
+          "required": true,
+          "fields": {
+            "heading": "string",
+            "subheading": "string",
+            "image": "string|null"
+          }
+        },
+        "about": {
+          "required": true,
+          "fields": {
+            "heading": "string",
+            "body": "string"
+          }
+        },
+        "features": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "icon": "string|null",
+                "title": "string",
+                "description": "string"
+              }
+            ]
+          }
+        },
+        "benefits": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "icon": "string|null",
+                "title": "string",
+                "description": "string"
+              }
+            ]
+          }
+        },
+        "steps": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "step_number": "string",
+                "title": "string",
+                "description": "string"
+              }
+            ]
+          }
+        },
+        "how-to": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "title": "string",
+                "description": "string",
+                "image": "string|null"
+              }
+            ]
+          }
+        },
+        "faq": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "question": "string",
+                "answer": "string"
+              }
+            ]
+          }
+        },
+        "testimonials": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "items": [
+              {
+                "quote": "string",
+                "author": "string",
+                "role": "string|null"
+              }
+            ]
+          }
+        },
+        "cta": {
+          "required": false,
+          "fields": {
+            "heading": "string",
+            "body": "string",
+            "button_text": "string",
+            "button_url": "string"
+          }
+        },
+        "stats": {
+          "required": false,
+          "fields": {
+            "items": [
+              {
+                "value": "string",
+                "label": "string"
+              }
+            ]
+          }
+        },
+        "contact": {
+          "required": false,
+          "fields": {
+            "email": "string|null",
+            "phone": "string|null",
+            "address": "string|null"
+          }
+        }
+      }
+    }
+  }
+}
